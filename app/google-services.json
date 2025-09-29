@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "692855404999",
+    "project_id": "tvdemoapp-680b3",
+    "storage_bucket": "tvdemoapp-680b3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:692855404999:android:3c7b15391c1903656701e2",
+        "android_client_info": {
+          "package_name": "com.vs18.tvdemoapp.free"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCCZRSB0nEJwa-s5iqpILpp9nxNMCm4oeI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
