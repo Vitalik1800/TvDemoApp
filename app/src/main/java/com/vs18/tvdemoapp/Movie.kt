@@ -9,7 +9,8 @@ data class Movie(
     var backgroundImageUrl: String? = null,
     var cardImageUrl: String? = null,
     var videoUrl: String? = null,
-    var studio: String? = null
+    var studio: String? = null,
+    var subtitleUrl: String? = null
 ) : Serializable {
     override fun toString(): String {
         return "Movie{id=$id, title='$title', videoUrl='$videoUrl', backgroundImageUrl='$backgroundImageUrl', cardImageUrl='$cardImageUrl'}"

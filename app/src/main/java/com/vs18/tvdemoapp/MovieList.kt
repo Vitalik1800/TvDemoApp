@@ -16,7 +16,8 @@ object MovieList {
             backgroundImageUrl = "https://peach.blender.org/wp-content/uploads/title_anouncement.jpg?x11217",
             cardImageUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg",
             videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-            studio = "Blender"
+            studio = "Blender",
+            subtitleUrl = "https://raw.githubusercontent.com/Vitalik1800/SubtitlesVS18/main/bigbuckbunny_en.vtt"
         ),
         Movie(
             id = 2,
@@ -25,7 +26,8 @@ object MovieList {
             backgroundImageUrl = "https://orange.blender.org/wp-content/themes/orange/images/common/ed_head.jpg",
             cardImageUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/ElephantsDream.jpg",
             videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-            studio = "Blender"
+            studio = "Blender",
+            subtitleUrl = "https://raw.githubusercontent.com/Vitalik1800/SubtitlesVS18/refs/heads/main/elephants_dream.vtt"
         ),
         Movie(
             id = 3,
@@ -33,8 +35,9 @@ object MovieList {
             description = "Open movie Sintel (HLS streaming)",
             backgroundImageUrl = "https://durian.blender.org/wp-content/uploads/2010/05/sintel_poster.jpg",
             cardImageUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/Sintel.jpg",
-            videoUrl = "https://storage.googleapis.com/shaka-demo-assets/sintel-hls/hls.m3u8",
-            studio = "Blender"
+            videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+            studio = "Blender",
+            subtitleUrl = "https://raw.githubusercontent.com/Vitalik1800/SubtitlesVS18/refs/heads/main/sintel.vtt"
         ),
         Movie(
             id = 4,
@@ -42,8 +45,9 @@ object MovieList {
             description = "Sci-fi short film by Blender",
             backgroundImageUrl = "https://mango.blender.org/wp-content/uploads/2013/05/01_thom_celia_bridge.jpg",
             cardImageUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/TearsOfSteel.jpg",
-            videoUrl = "https://storage.googleapis.com/shaka-demo-assets/tears-of-steel/manifest.mpd",
-            studio = "Blender"
+            videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+            studio = "Blender",
+            subtitleUrl = "https://raw.githubusercontent.com/Vitalik1800/SubtitlesVS18/refs/heads/main/tears_of_steel.vvt"
         )
     )
 }
