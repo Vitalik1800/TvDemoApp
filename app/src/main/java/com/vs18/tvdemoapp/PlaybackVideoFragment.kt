@@ -4,7 +4,6 @@ import android.os.*
 import android.view.*
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
-import androidx.leanback.app.*
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.ui.*
 import com.google.android.exoplayer2.util.*
@@ -20,7 +19,6 @@ class PlaybackVideoFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        // Створюємо PlayerView
         playerView = PlayerView(requireContext()).apply {
             useController = true
             layoutParams = ViewGroup.LayoutParams(
@@ -34,29 +32,26 @@ class PlaybackVideoFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Отримуємо дані фільму з DetailsActivity
         val movie = activity?.intent?.getSerializableExtra(DetailsActivity.MOVIE) as? Movie
         val videoUrl = movie?.videoUrl ?: return
         val title = movie.title ?: "Playback"
 
-        // Створюємо плеєр
         player = SimpleExoPlayer.Builder(requireContext()).build().also { exoPlayer ->
             playerView.player = exoPlayer
 
-            val mediaItem = MediaItem.Builder()
-                .setUri(videoUrl)
-                .setSubtitleConfigurations(
-                    listOf(
-                        MediaItem.SubtitleConfiguration.Builder(
-                            "https://bitdash-a.akamaihd.net/content/sintel/subtitles/subtitles_en.vtt".toUri()
-                        )
-                            .setMimeType(MimeTypes.TEXT_VTT)
-                            .setLanguage("en")
-                            .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
-                            .build()
-                    )
-                )
-                .build()
+            val builder = MediaItem.Builder().setUri(videoUrl)
+
+            movie?.subtitleUrl?.let { subs ->
+                val subtitleConfig = MediaItem.SubtitleConfiguration.Builder(subs.toUri())
+                    .setMimeType(MimeTypes.TEXT_VTT)
+                    .setLanguage("en")
+                    .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
+                    .build()
+
+                builder.setSubtitleConfigurations(listOf(subtitleConfig))
+            }
+
+            val mediaItem = builder.build()
 
             exoPlayer.setMediaItem(mediaItem)
             exoPlayer.prepare()
