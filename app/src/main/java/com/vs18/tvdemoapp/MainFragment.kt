@@ -32,7 +32,9 @@ class MainFragment : BrowseSupportFragment() {
         Log.i(TAG, "onCreate")
         super.onActivityCreated(savedInstanceState)
 
-        title = FirebaseRemoteConfig.getInstance().getString("catalog_title")
+        title = "Loading..."
+        headersState = HEADERS_ENABLED
+
         prepareBackgroundManager()
         setupUIElements()
         loadRows()
@@ -85,6 +87,11 @@ class MainFragment : BrowseSupportFragment() {
         rowsAdapter.add(ListRow(gridHeader, gridRowAdapter))
 
         adapter = rowsAdapter
+
+        parentFragmentManager.setFragmentResultListener("remoteConfig", this) {_, bundle ->
+            val catalogTitle = bundle.getString("catalog_title") ?: "Default Catalog"
+            title = catalogTitle
+        }
     }
 
     private fun setupEventListeners() {

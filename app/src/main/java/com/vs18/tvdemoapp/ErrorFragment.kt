@@ -1,6 +1,6 @@
 package com.vs18.tvdemoapp
 
-import android.annotation.SuppressLint
+import android.annotation.*
 import android.os.*
 import android.view.*
 import androidx.core.content.*

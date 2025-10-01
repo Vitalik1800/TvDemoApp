@@ -18,6 +18,7 @@ android {
     }
 
     flavorDimensions += "type"
+
     productFlavors {
         create("free") {
             dimension = "type"
@@ -33,34 +34,41 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
     }
+
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
 }
 
 dependencies {
+    // AndroidX
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.leanback)
+
+    // UI/Media
     implementation(libs.glide)
     implementation(libs.exoplayer.core)
     implementation(libs.exoplayer.hls)
     implementation(libs.exoplayer.ui)
 
-    // Firebase через BoM
+    // Firebase (через BoM)
     implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.config.ktx)
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.crashlytics.ndk)
-    implementation(libs.firebase.analytics)
-    implementation(libs.firebase.config)
+    implementation(libs.google.firebase.config.ktx)
 }
+
+
