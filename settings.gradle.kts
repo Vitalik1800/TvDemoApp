@@ -3,9 +3,10 @@ pluginManagement {
         google {
             content {
                 includeGroupByRegex("com\\.android.*")
+                includeGroupByRegex("androidx.*")
                 includeGroupByRegex("com\\.google.*")
                 includeGroupByRegex("com\\.google\\.firebase.*")
-                includeGroupByRegex("androidx.*")
+                includeGroupByRegex("com\\.google\\.android\\.gms.*")
             }
         }
         mavenCentral()
@@ -23,3 +24,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "TvDemoApp"
 include(":app")
+includeBuild("gradle_utils")
+

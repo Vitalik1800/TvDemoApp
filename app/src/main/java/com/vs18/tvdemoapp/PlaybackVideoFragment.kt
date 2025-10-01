@@ -32,6 +32,20 @@ class PlaybackVideoFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        view.isFocusableInTouchMode = true
+        view.requestFocus()
+        view.setOnKeyListener{ _, keyCode, event ->
+            if (event.action == KeyEvent.ACTION_DOWN) {
+                when (keyCode) {
+                    KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
+                        player?.let { it.playWhenReady = !it.playWhenReady}
+                        return@setOnKeyListener true
+                    }
+                }
+            }
+            false
+        }
+
         val movie = activity?.intent?.getSerializableExtra(DetailsActivity.MOVIE) as? Movie
         val videoUrl = movie?.videoUrl ?: return
         val title = movie.title ?: "Playback"
