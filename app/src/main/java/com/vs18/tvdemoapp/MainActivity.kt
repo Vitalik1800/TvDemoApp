@@ -25,6 +25,7 @@ class MainActivity : FragmentActivity() {
             text = "Crash Test"
             setOnClickListener {
                 FirebaseCrashlytics.getInstance().log("Crash button pressed in MainActivity")
+                testError()
                 throw RuntimeException("Test Crash: triggered by Crash Button")
             }
         }
@@ -57,7 +58,6 @@ class MainActivity : FragmentActivity() {
                 .replace(R.id.main_browse_fragment, MainFragment())
                 .commitNow()
         }
-       // testError()
     }
 
     private fun fetchRemoteConfig() {
