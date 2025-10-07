@@ -17,6 +17,7 @@ import com.bumptech.glide.request.transition.*
 import com.google.firebase.crashlytics.*
 import java.util.*
 
+@Suppress("DEPRECATION")
 class MainFragment : BrowseSupportFragment() {
 
     private val handler = Handler(Looper.getMainLooper())

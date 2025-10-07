@@ -11,6 +11,7 @@ import com.google.android.exoplayer2.ui.*
 import com.google.android.exoplayer2.util.*
 import com.google.firebase.crashlytics.*
 
+@Suppress("DEPRECATION")
 class PlaybackVideoFragment : Fragment() {
 
     private var player: SimpleExoPlayer? = null

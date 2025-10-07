@@ -1,7 +1,6 @@
 package com.vs18.tvdemoapp
 
 import android.content.*
-import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.*
 import androidx.test.espresso.Espresso.*
 import androidx.test.espresso.assertion.ViewAssertions.*
