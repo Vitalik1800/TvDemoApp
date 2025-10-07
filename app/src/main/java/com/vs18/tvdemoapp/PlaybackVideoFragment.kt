@@ -7,7 +7,9 @@ import androidx.annotation.RequiresApi
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import com.google.android.exoplayer2.*
+import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import com.google.android.exoplayer2.ui.*
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.google.android.exoplayer2.util.*
 import com.google.firebase.crashlytics.*
 
@@ -27,18 +29,16 @@ class PlaybackVideoFragment : Fragment() {
         return playerView
     }
 
-    @SuppressLint("ObsoleteSdkInt")
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         view.isFocusableInTouchMode = true
         view.requestFocus()
-        view.setOnKeyListener{ _, keyCode, event ->
+        view.setOnKeyListener { _, keyCode, event ->
             if (event.action == KeyEvent.ACTION_DOWN) {
                 when (keyCode) {
                     KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
-                        player?.let { it.playWhenReady = !it.playWhenReady}
+                        player?.let { it.playWhenReady = !it.playWhenReady }
                         return@setOnKeyListener true
                     }
                 }
@@ -46,36 +46,40 @@ class PlaybackVideoFragment : Fragment() {
             false
         }
 
-        val movie: Movie? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            activity?.intent?.getSerializableExtra(DetailsActivity.MOVIE, Movie::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            activity?.intent?.getSerializableExtra(DetailsActivity.MOVIE) as? Movie
+        val movie: Movie? = activity?.intent?.getParcelableExtra<Movie>(DetailsActivity.MOVIE)
+        if (movie == null || movie.videoUrl == null) {
+            return
         }
-        val videoUrl = movie?.videoUrl ?: return
         val title = movie.title ?: "Playback"
 
-        player = SimpleExoPlayer.Builder(requireContext()).build().also { exoPlayer ->
-            playerView.player = exoPlayer
+        val httpDataSourceFactory = DefaultHttpDataSource.Factory()
+        val unstableDataSourceFactory = UnstableDataSourceFactory(httpDataSourceFactory)
+        val mediaSourceFactory = DefaultMediaSourceFactory(unstableDataSourceFactory)
 
-            val builder = MediaItem.Builder().setUri(videoUrl)
+        player = SimpleExoPlayer.Builder(requireContext())
+            .setMediaSourceFactory(mediaSourceFactory)
+            .build()
+            .also { exoPlayer ->
+                playerView.player = exoPlayer
 
-            movie.subtitleUrl?.let { subs ->
-                val subtitleConfig = MediaItem.SubtitleConfiguration.Builder(subs.toUri())
-                    .setMimeType(MimeTypes.TEXT_VTT)
-                    .setLanguage("en")
-                    .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
-                    .build()
+                val builder = MediaItem.Builder().setUri(movie.videoUrl)
 
-                builder.setSubtitleConfigurations(listOf(subtitleConfig))
+                movie.subtitleUrl?.let { subs ->
+                    val subtitleConfig = MediaItem.SubtitleConfiguration.Builder(subs.toUri())
+                        .setMimeType(MimeTypes.TEXT_VTT)
+                        .setLanguage("en")
+                        .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
+                        .build()
+
+                    builder.setSubtitleConfigurations(listOf(subtitleConfig))
+                }
+
+                val mediaItem = builder.build()
+
+                exoPlayer.setMediaItem(mediaItem)
+                exoPlayer.prepare()
+                exoPlayer.playWhenReady = true
             }
-
-            val mediaItem = builder.build()
-
-            exoPlayer.setMediaItem(mediaItem)
-            exoPlayer.prepare()
-            exoPlayer.playWhenReady = true
-        }
 
         FirebaseCrashlytics.getInstance().log("Playing video: $title")
     }

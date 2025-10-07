@@ -3,11 +3,11 @@ name: CI Pipeline for TvDemoApp
 on:
   push:
     branches:
-      - main
-      - feature/*
+      - master
+      - app-new*
   pull_request:
     branches:
-      - main
+      - master
 
 jobs:
   lint:
@@ -146,3 +146,4 @@ jobs:
         with:
           name: release-apks
           path: app/build/outputs/apk/**/*Release.apk
+

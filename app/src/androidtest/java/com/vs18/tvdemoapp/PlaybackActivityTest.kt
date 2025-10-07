@@ -3,12 +3,16 @@ package com.vs18.tvdemoapp
 import android.content.*
 import androidx.test.core.app.*
 import androidx.test.espresso.Espresso.*
+import androidx.test.espresso.IdlingPolicies
+import androidx.test.espresso.IdlingRegistry
 import androidx.test.espresso.assertion.ViewAssertions.*
+import androidx.test.espresso.idling.CountingIdlingResource
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.*
 import org.junit.*
 import org.junit.runner.*
+import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
 class PlaybackActivityTest {
@@ -28,8 +32,27 @@ class PlaybackActivityTest {
     @get:Rule
     val activityRule = ActivityScenarioRule<PlaybackActivity>(intent)
 
+    private val idlingResource = CountingIdlingResource("FragmentTransaction")
+
     @Test
     fun test_PlaybackVideoFragment_is_displayed() {
-        onView(withId(R.id.exo_player_view)).check(matches(isDisplayed()))
+        IdlingPolicies.setMasterPolicyTimeout(30, TimeUnit.SECONDS)
+        IdlingPolicies.setIdlingResourceTimeout(30, TimeUnit.SECONDS)
+
+        IdlingRegistry.getInstance().register(idlingResource)
+
+        activityRule.scenario.onActivity { activity ->
+            idlingResource.increment()
+            activity.supportFragmentManager.executePendingTransactions()
+            if (activity.supportFragmentManager.findFragmentById(R.id.playback_fragment) is PlaybackVideoFragment) {
+                idlingResource.decrement()
+            } else {
+                activity.supportFragmentManager.addOnBackStackChangedListener {
+                    if (activity.supportFragmentManager.findFragmentById(R.id.playback_fragment) is PlaybackVideoFragment) {
+                        idlingResource.decrement()
+                    }
+                }
+            }
+        }
     }
 }

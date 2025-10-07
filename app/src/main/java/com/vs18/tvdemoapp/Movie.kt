@@ -1,9 +1,12 @@
 package com.vs18.tvdemoapp
 
-import java.io.*
+import android.os.*
+import androidx.room.*
 
+@Entity
 data class Movie(
-    var id: Long = 0,
+
+    @PrimaryKey var id: Int,
     var title: String? = null,
     var description: String? = null,
     var backgroundImageUrl: String? = null,
@@ -11,12 +14,33 @@ data class Movie(
     var videoUrl: String? = null,
     var studio: String? = null,
     var subtitleUrl: String? = null
-) : Serializable {
-    override fun toString(): String {
-        return "Movie{id=$id, title='$title', videoUrl='$videoUrl', backgroundImageUrl='$backgroundImageUrl', cardImageUrl='$cardImageUrl'}"
+) : Parcelable {
+    constructor(parcel: Parcel) : this(
+        id = parcel.readInt(),
+        title = parcel.readString(),
+        description = parcel.readString(),
+        backgroundImageUrl = parcel.readString(),
+        cardImageUrl = parcel.readString(),
+        videoUrl = parcel.readString(),
+        studio = parcel.readString(),
+        subtitleUrl = parcel.readString()
+    )
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeInt(id)
+        parcel.writeString(title)
+        parcel.writeString(description)
+        parcel.writeString(backgroundImageUrl)
+        parcel.writeString(cardImageUrl)
+        parcel.writeString(videoUrl)
+        parcel.writeString(studio)
+        parcel.writeString(subtitleUrl)
     }
 
-    companion object {
-        internal const val serialVersionUID = 727566175075960653L
+    override fun describeContents(): Int = 0
+
+    companion object CREATOR : Parcelable.Creator<Movie> {
+        override fun createFromParcel(parcel: Parcel): Movie = Movie(parcel)
+        override fun newArray(size: Int): Array<out Movie?>? = arrayOfNulls(size)
     }
 }
