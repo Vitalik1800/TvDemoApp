@@ -8,8 +8,6 @@ import android.widget.*
 import androidx.fragment.app.*
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.*
-import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.google.firebase.remoteconfig.*
 import com.google.firebase.remoteconfig.*
 
 class MainActivity : FragmentActivity() {
@@ -33,9 +31,9 @@ class MainActivity : FragmentActivity() {
 
         addContentView(
             crashButton,
-            android.widget.FrameLayout.LayoutParams(
-                android.widget.FrameLayout.LayoutParams.WRAP_CONTENT,
-                android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT
             )
         )
 
@@ -53,30 +51,13 @@ class MainActivity : FragmentActivity() {
         )
 
         fetchRemoteConfig()
-      /*  val remoteConfig = FirebaseRemoteConfig.getInstance()
-        remoteConfig.setConfigSettingsAsync(
-            FirebaseRemoteConfigSettings.Builder()
-                .setMinimumFetchIntervalInSeconds(90)
-                .build()
-
-        )
-
-        remoteConfig.setDefaultsAsync(mapOf("catalog_title" to "TV Catalog Demo"))
-        remoteConfig.fetchAndActivate().addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val title = remoteConfig.getString("catalog_title")
-                Toast.makeText(this, "Remove Config title: $title", Toast.LENGTH_LONG).show()
-            } else {
-                FirebaseCrashlytics.getInstance().recordException(Exception("Remote Config fetch failed"))
-            }
-        }*/
 
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
                 .replace(R.id.main_browse_fragment, MainFragment())
                 .commitNow()
         }
-            // testError()
+       // testError()
     }
 
     private fun fetchRemoteConfig() {

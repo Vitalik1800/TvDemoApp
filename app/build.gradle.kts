@@ -15,6 +15,7 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     flavorDimensions += "type"
@@ -49,6 +50,13 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    packaging {
+        resources {
+            excludes += "META-INF/LICENSE.md"
+            excludes += "META-INF/LICENSE-notice.md"
+        }
+    }
 }
 
 dependencies {
@@ -69,6 +77,27 @@ dependencies {
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.crashlytics.ndk)
     implementation(libs.google.firebase.config.ktx)
+    implementation(libs.androidx.junit.ktx)
+    implementation(libs.androidx.fragment.testing)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material)
+    implementation(libs.androidx.activity)
+    implementation(libs.androidx.constraintlayout)
+    testImplementation(libs.mockk)
+    testImplementation(libs.junit.jupiter.api)
+    testImplementation(libs.robolectric)
+    androidTestImplementation(libs.junit.jupiter.api)
+    androidTestImplementation(libs.androidx.espresso.core.v361)
+    androidTestImplementation(libs.androidx.runner)
+    //noinspection GradleDependency
+    androidTestImplementation(libs.androidx.rules)
+    testImplementation(libs.robolectric.v4122)
+    testRuntimeOnly(libs.junit.jupiter.api)
+    testImplementation(libs.junit)
+    testImplementation(kotlin("test"))
 }
 
-
+afterEvaluate {
+    tasks.matching { it.name.contains("processPro") && it.name.contains("GoogleServices") }
+        .configureEach { enabled = false }
+}

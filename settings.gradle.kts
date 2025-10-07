@@ -24,5 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "TvDemoApp"
 include(":app")
-includeBuild("gradle_utils")
 

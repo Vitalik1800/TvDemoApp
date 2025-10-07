@@ -1,7 +1,6 @@
 package com.vs18.tvdemoapp
 
 import android.os.*
-import android.view.KeyEvent
 import androidx.fragment.app.*
 
 class PlaybackActivity : FragmentActivity() {
