@@ -15,7 +15,6 @@ import com.bumptech.glide.*
 import com.bumptech.glide.request.target.*
 import com.bumptech.glide.request.transition.*
 import com.google.firebase.crashlytics.*
-import com.google.firebase.remoteconfig.*
 import java.util.*
 
 class MainFragment : BrowseSupportFragment() {

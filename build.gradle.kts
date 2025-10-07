@@ -26,3 +26,10 @@ tasks.register<PrintFlavorTask>("printFlavor") {
     flavor.set(providers.gradleProperty("FLAVOR").orElse("default"))
 }
 
+tasks.withType<Test> {
+    dependsOn.remove("processProDebugGoogleServices")
+    dependsOn.remove("processProReleaseGoogleServices")
+}
+
+
+

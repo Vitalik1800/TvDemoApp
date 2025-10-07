@@ -1,13 +1,15 @@
 package com.vs18.tvdemoapp
 
+import android.annotation.SuppressLint
 import android.os.*
 import android.view.*
+import androidx.annotation.RequiresApi
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.ui.*
 import com.google.android.exoplayer2.util.*
-import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.google.firebase.crashlytics.*
 
 class PlaybackVideoFragment : Fragment() {
 
@@ -19,16 +21,13 @@ class PlaybackVideoFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        playerView = PlayerView(requireContext()).apply {
-            useController = true
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
-        }
+        playerView = inflater.inflate(R.layout.exo_simple_player_view, container, false) as PlayerView
+        playerView.useController = true
         return playerView
     }
 
+    @SuppressLint("ObsoleteSdkInt")
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -46,7 +45,12 @@ class PlaybackVideoFragment : Fragment() {
             false
         }
 
-        val movie = activity?.intent?.getSerializableExtra(DetailsActivity.MOVIE) as? Movie
+        val movie: Movie? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            activity?.intent?.getSerializableExtra(DetailsActivity.MOVIE, Movie::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            activity?.intent?.getSerializableExtra(DetailsActivity.MOVIE) as? Movie
+        }
         val videoUrl = movie?.videoUrl ?: return
         val title = movie.title ?: "Playback"
 
@@ -55,7 +59,7 @@ class PlaybackVideoFragment : Fragment() {
 
             val builder = MediaItem.Builder().setUri(videoUrl)
 
-            movie?.subtitleUrl?.let { subs ->
+            movie.subtitleUrl?.let { subs ->
                 val subtitleConfig = MediaItem.SubtitleConfiguration.Builder(subs.toUri())
                     .setMimeType(MimeTypes.TEXT_VTT)
                     .setLanguage("en")
