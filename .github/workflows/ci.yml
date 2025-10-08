@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - app-new*
+      - feature/week4-ci-exoplayer-coroutines
   pull_request:
     branches:
       - master
@@ -22,18 +23,29 @@ jobs:
           java-version: '17'
           distribution: 'adopt'
 
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
+
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
       - name: Run lint
-        run: ./gradlew lintFreeDebug lintProDebug
+        run: ./gradlew lintFreeDebug lintProDebug --stacktrace
 
-      - name: Upload lint report
+      - name: Upload lint reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: lint-reports
-          path: app/build/reports/lint-results-*.html
+          path: |
+            app/build/reports/lint-results-*.html
+            app/build/reports/problems/problems-report.html
 
   unit-tests:
     runs-on: ubuntu-latest
@@ -46,6 +58,15 @@ jobs:
         with:
           java-version: '17'
           distribution: 'adopt'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
@@ -72,17 +93,37 @@ jobs:
           java-version: '17'
           distribution: 'adopt'
 
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
+
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
       - name: Run UI tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 28
+          api-level: 36
           target: google_apis
           arch: x86_64
-          profile: Asus ASUS_I003DD
-          script: ./gradlew connectedFreeDebugAndroidTest connectedProDebugAndroidTest
+          profile: pixel_4
+          cores: 2
+          avd-name: test
+          force-avd-creation: true
+          emulator-boot-timeout: 900
+          emulator-port: 5554
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          disable-spellchecker: false
+          disable-linux-hw-accel: auto
+          enable-hw-keyboard: false
+          channel: stable
+          disk-size: 2G
 
       - name: Upload UI test reports
         if: always()
@@ -103,6 +144,15 @@ jobs:
         with:
           java-version: '17'
           distribution: 'adopt'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
@@ -130,6 +180,15 @@ jobs:
           java-version: '17'
           distribution: 'adopt'
 
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
+
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
@@ -146,5 +205,3 @@ jobs:
         with:
           name: release-apks
           path: app/build/outputs/apk/**/*Release.apk
-
-
