@@ -123,11 +123,18 @@ jobs:
           script: |
             adb wait-for-device
             boot_completed=""
+            retries=0
             until [[ "$boot_completed" == "1" ]]; do
               boot_completed=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
               if [[ "$boot_completed" != "1" ]]; then
-                echo "Waiting for emulator to fully boot..."
+                echo "Waiting for emulator to fully boot... ($retries)"
                 sleep 10
+              fi
+              retries=$((retries+1))
+              if [ $retries -gt 30 ]; then
+                echo "Emulator failed to start"
+                adb logcat -d
+                exit 1
               fi
             done
             adb devices
