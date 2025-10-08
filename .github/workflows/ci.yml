@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - feature/week4-ci-exoplayer-coroutines
       - app-new*
   pull_request:
     branches:
@@ -79,10 +78,10 @@ jobs:
       - name: Run UI tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 33
+          api-level: 28
           target: google_apis
           arch: x86_64
-          profile: Nexus 6
+          profile: Asus ASUS_I003DD
           script: ./gradlew connectedFreeDebugAndroidTest connectedProDebugAndroidTest
 
       - name: Upload UI test reports
