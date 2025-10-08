@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - master
-      - app-new*
       - feature/week4-ci-exoplayer-coroutines
+      - app-new*
   pull_request:
     branches:
       - master
@@ -105,6 +105,13 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
+      - name: Debug ADB devices
+        run: |
+          adb kill-server
+          adb start-server
+          adb devices
+        continue-on-error: true
+
       - name: Run UI tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -112,18 +119,20 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_4
-          cores: 2
+          cores: 4  # Increased for better performance
+          ram-size: 4096M  # Added for stability
+          disk-size: 2G
           avd-name: test
           force-avd-creation: true
-          emulator-boot-timeout: 900
+          emulator-boot-timeout: 1200  # Increased to 20 minutes
           emulator-port: 5554
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -port 5554
           disable-animations: true
           disable-spellchecker: false
           disable-linux-hw-accel: auto
           enable-hw-keyboard: false
           channel: stable
-          disk-size: 2G
+          script: ./gradlew connectedFreeDebugAndroidTest connectedProDebugAndroidTest --stacktrace
 
       - name: Upload UI test reports
         if: always()
@@ -131,6 +140,20 @@ jobs:
         with:
           name: ui-test-reports
           path: app/build/reports/androidTests/
+
+      - name: Debug emulator logs
+        if: failure()
+        run: |
+          adb logcat -d > emulator_logcat.txt
+          cat emulator_logcat.txt
+        continue-on-error: true
+
+      - name: Upload emulator logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emulator-logs
+          path: emulator_logcat.txt
 
   build:
     needs: [lint, unit-tests]
@@ -199,9 +222,3 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
-
-      - name: Upload release APKs
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-apks
-          path: app/build/outputs/apk/**/*Release.apk
