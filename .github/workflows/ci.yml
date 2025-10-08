@@ -81,7 +81,7 @@ jobs:
           name: unit-test-reports
           path: app/build/test-results/
 
-    ui-tests:
+  ui-tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -211,4 +211,5 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
+
 
