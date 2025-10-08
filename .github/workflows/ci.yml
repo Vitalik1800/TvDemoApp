@@ -82,51 +82,60 @@ jobs:
           path: app/build/test-results/
 
   ui-tests:
-    runs-on: macos-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+  runs-on: macos-latest
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v3
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
 
-      - name: Create AVD
-        run: |
-          echo "no" | avdmanager create avd -n ci-avd -k "system-images;android-30;google_apis;x86_64" --force
-          emulator -list-avds
+    - name: Install system image
+      run: |
+        sdkmanager --install "system-images;android-30;google_apis;x86_64"
+        sdkmanager --install "platforms;android-30"
+        sdkmanager --install "platform-tools"
+        sdkmanager --install "emulator"
 
-      - name: Start emulator
-        run: |
-          nohup emulator -avd ci-avd -no-window -no-audio -gpu swiftshader_indirect -no-snapshot > /dev/null 2>&1 &
+    - name: Create AVD
+      run: |
+        echo "no" | avdmanager create avd -n ci-avd -k "system-images;android-30;google_apis;x86_64" --force
+        emulator -list-avds
 
-      - name: Kill adb server
-        run: adb kill-server || true
+    - name: Start emulator
+      run: |
+        nohup emulator -avd ci-avd -no-window -no-audio -gpu swiftshader_indirect -no-snapshot > /dev/null 2>&1 &
 
-      - name: Start adb server
-        run: adb start-server
+    - name: Kill adb server
+      run: adb kill-server || true
 
-      - name: Wait for emulator to boot
-        run: |
-          adb wait-for-device
-          while [[ "$(adb get-state)" != "device" ]]; do
-            echo "⏳ Waiting for device..."
-            sleep 5
-          done
-          boot_completed=""
-          until [[ "$boot_completed" == "1" ]]; do
-            boot_completed=$(adb -e shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
-            sleep 5
-          done
-          echo "✅ Emulator booted"
+    - name: Start adb server
+      run: adb start-server
 
-      - name: Run UI tests
-        run: ./gradlew connectedDebugAndroidTest
+    - name: Wait for emulator to boot
+      run: |
+        adb wait-for-device
+        while [[ "$(adb get-state)" != "device" ]]; do
+          echo "⏳ Waiting for device..."
+          sleep 5
+        done
+        boot_completed=""
+        until [[ "$boot_completed" == "1" ]]; do
+          boot_completed=$(adb -e shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
+          sleep 5
+        done
+        echo "✅ Emulator booted"
+        adb devices -l
+
+    - name: Run UI tests
+      run: ./gradlew connectedDebugAndroidTest
+
 
 
   build:
@@ -196,4 +205,5 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
+
 
