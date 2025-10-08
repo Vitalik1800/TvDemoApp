@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - feature/week4-ci-exoplayer-coroutines
       - app-new*
   pull_request:
     branches:
