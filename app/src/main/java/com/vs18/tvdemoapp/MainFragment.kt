@@ -37,8 +37,8 @@ class MainFragment : BrowseSupportFragment() {
     private lateinit var metrics: DisplayMetrics
     private var backgroundTimer: Timer? = null
     private var backgroundUri: String? = null
-    private val repository by lazy {
-        MovieRepository((requireActivity().application as TvDemoApp).database.movieDao())
+    private val repository: MovieRepository by lazy {
+        ((requireActivity().application as TvDemoApp).database.movieDao()).let { MovieRepository(it) }
     }
     private val scope = CoroutineScope(Dispatchers.Main + Job())
     private lateinit var adapter: ArrayObjectAdapter
