@@ -25,8 +25,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -39,20 +37,13 @@ class MainFragment : BrowseSupportFragment() {
     private lateinit var metrics: DisplayMetrics
     private var backgroundTimer: Timer? = null
     private var backgroundUri: String? = null
-    private val repository: MovieRepository by lazy {
-        ((requireActivity().application as TvDemoApp).database.movieDao()).let { MovieRepository(it) }
+    private val repository by lazy {
+        MovieRepository((requireActivity().application as TvDemoApp).database.movieDao())
     }
     private val scope = CoroutineScope(Dispatchers.Main + Job())
     private lateinit var adapter: ArrayObjectAdapter
     private var staticRowsLoaded = false // Флаг для статичних рядків
 
-
-    private val _movieState = MutableStateFlow<List<Movie>>(emptyList())
-    private val movieState: StateFlow<List<Movie>> = _movieState
-
-    private val _movieSelectionEvents = MutableStateFlow<Movie?>(null)
-    private val movieSelectionEvents: StateFlow<Movie?> = _movieSelectionEvents
-    
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         Log.i(TAG, "onCreate")
         super.onActivityCreated(savedInstanceState)
@@ -63,13 +54,12 @@ class MainFragment : BrowseSupportFragment() {
         scope.launch {
             repository.getMoviesFromNetwork().collect { movies ->
                 Log.d(TAG, "Movies from network: $movies")
-                _movieState.value = movies
                 updateAdapter(movies)
             }
         }
 
         scope.launch {
-            movieState.collect { movies ->
+            repository.movieState.collect { movies ->
                 Log.d(TAG, "Movies from state: $movies")
                 updateAdapter(movies)
             }
