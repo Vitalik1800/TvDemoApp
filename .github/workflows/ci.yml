@@ -86,23 +86,23 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-  
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
-  
+
       - name: Cache Gradle
         uses: gradle/gradle-build-action@v2
-  
+
       - name: Cache Emulator Images
         uses: actions/cache@v4
         with:
           path: ~/.android/avd
           key: emulator-${{ runner.os }}-api29-x86_64-${{ hashFiles('**/*.gradle*') }}
           restore-keys: emulator-${{ runner.os }}-api29-x86_64-
-  
+
       - name: Check Runner Resources
         run: |
           echo "CPU Info:"
@@ -111,14 +111,14 @@ jobs:
           system_profiler SPHardwareDataType | grep "Memory:"
           echo "Disk Space:"
           df -h
-  
+
       - name: Restart ADB Server
         run: |
           $ANDROID_HOME/platform-tools/adb kill-server
           $ANDROID_HOME/platform-tools/adb start-server
         env:
           ANDROID_HOME: /Users/runner/Library/Android/sdk
-  
+
       - name: Debug ADB and Emulator
         run: |
           echo "ADB Devices:"
@@ -130,7 +130,7 @@ jobs:
         if: always()
         env:
           ANDROID_HOME: /Users/runner/Library/Android/sdk
-  
+
       - name: Run Emulator and Instrumented Tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -142,14 +142,14 @@ jobs:
           disable-animations: true
           emulator-boot-timeout: 300
           script: ./gradlew connectedCheck --stacktrace --info
-  
+
       - name: Upload Test Reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: instrumented-test-reports
           path: app/build/outputs/androidTest-results/
-  
+
 
   build:
     needs: [lint, unit-tests]
