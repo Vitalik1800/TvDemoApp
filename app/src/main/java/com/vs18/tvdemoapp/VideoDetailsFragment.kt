@@ -26,7 +26,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         Log.d(TAG, "onCreate DetailsFragment")
         super.onCreate(savedInstanceState)
 
-        selectedMovie = activity?.intent?.getSerializableExtra(DetailsActivity.MOVIE) as Movie
+        selectedMovie = activity?.intent?.getParcelableExtra(DetailsActivity.MOVIE)
         if (selectedMovie != null) {
             presenterSelector = ClassPresenterSelector()
             adapter = ArrayObjectAdapter(presenterSelector)

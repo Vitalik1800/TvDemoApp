@@ -1,15 +1,19 @@
 package com.vs18.tvdemoapp
 
+import android.annotation.SuppressLint
 import android.os.*
 import android.view.*
+import androidx.annotation.RequiresApi
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
-import androidx.leanback.app.*
 import com.google.android.exoplayer2.*
+import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import com.google.android.exoplayer2.ui.*
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.google.android.exoplayer2.util.*
-import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.google.firebase.crashlytics.*
 
+@Suppress("DEPRECATION")
 class PlaybackVideoFragment : Fragment() {
 
     private var player: SimpleExoPlayer? = null
@@ -20,48 +24,62 @@ class PlaybackVideoFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        // Створюємо PlayerView
-        playerView = PlayerView(requireContext()).apply {
-            useController = true
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
-        }
+        playerView = inflater.inflate(R.layout.exo_simple_player_view, container, false) as PlayerView
+        playerView.useController = true
         return playerView
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Отримуємо дані фільму з DetailsActivity
-        val movie = activity?.intent?.getSerializableExtra(DetailsActivity.MOVIE) as? Movie
-        val videoUrl = movie?.videoUrl ?: return
+        view.isFocusableInTouchMode = true
+        view.requestFocus()
+        view.setOnKeyListener { _, keyCode, event ->
+            if (event.action == KeyEvent.ACTION_DOWN) {
+                when (keyCode) {
+                    KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
+                        player?.let { it.playWhenReady = !it.playWhenReady }
+                        return@setOnKeyListener true
+                    }
+                }
+            }
+            false
+        }
+
+        val movie: Movie? = activity?.intent?.getParcelableExtra<Movie>(DetailsActivity.MOVIE)
+        if (movie == null || movie.videoUrl == null) {
+            return
+        }
         val title = movie.title ?: "Playback"
 
-        // Створюємо плеєр
-        player = SimpleExoPlayer.Builder(requireContext()).build().also { exoPlayer ->
-            playerView.player = exoPlayer
+        val httpDataSourceFactory = DefaultHttpDataSource.Factory()
+        val unstableDataSourceFactory = UnstableDataSourceFactory(httpDataSourceFactory)
+        val mediaSourceFactory = DefaultMediaSourceFactory(unstableDataSourceFactory)
 
-            val mediaItem = MediaItem.Builder()
-                .setUri(videoUrl)
-                .setSubtitleConfigurations(
-                    listOf(
-                        MediaItem.SubtitleConfiguration.Builder(
-                            "https://bitdash-a.akamaihd.net/content/sintel/subtitles/subtitles_en.vtt".toUri()
-                        )
-                            .setMimeType(MimeTypes.TEXT_VTT)
-                            .setLanguage("en")
-                            .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
-                            .build()
-                    )
-                )
-                .build()
+        player = SimpleExoPlayer.Builder(requireContext())
+            .setMediaSourceFactory(mediaSourceFactory)
+            .build()
+            .also { exoPlayer ->
+                playerView.player = exoPlayer
 
-            exoPlayer.setMediaItem(mediaItem)
-            exoPlayer.prepare()
-            exoPlayer.playWhenReady = true
-        }
+                val builder = MediaItem.Builder().setUri(movie.videoUrl)
+
+                movie.subtitleUrl?.let { subs ->
+                    val subtitleConfig = MediaItem.SubtitleConfiguration.Builder(subs.toUri())
+                        .setMimeType(MimeTypes.TEXT_VTT)
+                        .setLanguage("en")
+                        .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
+                        .build()
+
+                    builder.setSubtitleConfigurations(listOf(subtitleConfig))
+                }
+
+                val mediaItem = builder.build()
+
+                exoPlayer.setMediaItem(mediaItem)
+                exoPlayer.prepare()
+                exoPlayer.playWhenReady = true
+            }
 
         FirebaseCrashlytics.getInstance().log("Playing video: $title")
     }

@@ -1,7 +1,6 @@
 package com.vs18.tvdemoapp
 
 import android.os.*
-import android.widget.*
 import androidx.fragment.app.*
 
 class DetailsActivity : FragmentActivity() {

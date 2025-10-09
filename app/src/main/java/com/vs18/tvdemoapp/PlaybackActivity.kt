@@ -9,9 +9,10 @@ class PlaybackActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_playback)
         if (savedInstanceState == null) {
+            val fragment = PlaybackVideoFragment()
             supportFragmentManager.beginTransaction()
-                .replace(R.id.playback_fragment, PlaybackVideoFragment())
-                .commit()
+                .replace(R.id.playback_fragment, fragment)
+                .commitNow()
         }
     }
 }
