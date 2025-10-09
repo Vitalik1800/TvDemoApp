@@ -112,10 +112,10 @@ jobs:
           api-level: 30
           target: google_apis
           arch: arm64-v8a
-          profile: Pixel_3a       # ✅ легший профіль
+          profile: Pixel_3          # ✅ гарантовано доступний профіль
           emulator-options: -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
-          emulator-wait-timeout: 600 # ✅ більше часу на завантаження
+          emulator-boot-timeout: 600
           script: ./gradlew connectedCheck
 
 
@@ -188,6 +188,7 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
+
 
 
 
