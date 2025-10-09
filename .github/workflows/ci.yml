@@ -100,29 +100,47 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.android/avd
-          key: emulator-${{ runner.os }}-api29-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: emulator-${{ runner.os }}-api29-
+          key: emulator-${{ runner.os }}-api29-x86_64-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: emulator-${{ runner.os }}-api29-x86_64-
+  
+      - name: Check Runner Resources
+        run: |
+          echo "CPU Info:"
+          sysctl -n machdep.cpu.brand_string
+          echo "Memory Info:"
+          system_profiler SPHardwareDataType | grep "Memory:"
+          echo "Disk Space:"
+          df -h
   
       - name: Restart ADB Server
         run: |
           $ANDROID_HOME/platform-tools/adb kill-server
           $ANDROID_HOME/platform-tools/adb start-server
+        env:
+          ANDROID_HOME: /Users/runner/Library/Android/sdk
   
       - name: Debug ADB and Emulator
         run: |
+          echo "ADB Devices:"
           $ANDROID_HOME/platform-tools/adb devices
-          $ANDROID_HOME/platform-tools/adb logcat -d | grep "boot" || true
+          echo "ADB Logcat (boot-related):"
+          $ANDROID_HOME/platform-tools/adb logcat -d | grep -i "boot" || true
+          echo "Emulator Status:"
+          $ANDROID_HOME/platform-tools/adb shell getprop sys.boot_completed || true
+        if: always()
+        env:
+          ANDROID_HOME: /Users/runner/Library/Android/sdk
   
       - name: Run Emulator and Instrumented Tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 29
-          target: google_apis
+          target: default
           arch: x86_64
           force-avd-creation: true
-          emulator-options: -no-snapshot -noaudio -no-boot-anim -camera-back none -memory 2048
+          emulator-options: -no-snapshot -noaudio -no-boot-anim -camera-back none -memory 2048 -accel on
           disable-animations: true
-          emulator-boot-timeout: 600
+          emulator-boot-timeout: 300
           script: ./gradlew connectedCheck --stacktrace --info
   
       - name: Upload Test Reports
@@ -131,7 +149,7 @@ jobs:
         with:
           name: instrumented-test-reports
           path: app/build/outputs/androidTest-results/
-
+  
 
   build:
     needs: [lint, unit-tests]
@@ -200,6 +218,7 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
+
 
 
 
