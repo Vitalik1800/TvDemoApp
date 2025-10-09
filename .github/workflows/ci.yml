@@ -100,44 +100,53 @@ jobs:
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
           echo "$HOME/android-sdk/emulator" >> $GITHUB_PATH
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          mkdir -p $ANDROID_HOME/cmdline-tools
 
-      - name: Download and install cmdline-tools
+      - name: Install cmdline-tools
         run: |
+          mkdir -p $HOME/android-sdk/cmdline-tools
           cd $HOME/android-sdk/cmdline-tools
           curl -o commandlinetools.zip https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-          unzip commandlinetools.zip
+          unzip -q commandlinetools.zip
           mv cmdline-tools latest
 
       - name: Accept SDK licenses and install components
         run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-30" "system-images;android-30;google_apis;x86_64" "emulator"
+          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager \
+            "platform-tools" \
+            "platforms;android-30" \
+            "system-images;android-30;google_apis;x86_64" \
+            "emulator"
 
       - name: Create AVD
         run: |
           mkdir -p ~/.android/avd
-          echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd -n ci-avd -k "system-images;android-30;google_apis;x86_64" --device "pixel"
+          echo "no" | $HOME/android-sdk/cmdline-tools/latest/bin/avdmanager create avd \
+            -n ci-avd \
+            -k "system-images;android-30;google_apis;x86_64" \
+            --device "pixel"
 
       - name: Verify AVD
-        run: $ANDROID_HOME/emulator/emulator -list-avds
+        run: $HOME/android-sdk/emulator/emulator -list-avds
 
       - name: Launch emulator
         run: |
-          nohup $ANDROID_HOME/emulator/emulator -avd ci-avd -no-window -no-snapshot -noaudio -no-boot-anim -gpu swiftshader_indirect &
+          nohup $HOME/android-sdk/emulator/emulator \
+            -avd ci-avd \
+            -no-window \
+            -no-snapshot \
+            -noaudio \
+            -no-boot-anim \
+            -gpu swiftshader_indirect &
           adb wait-for-device
           until adb shell getprop sys.boot_completed 2>/dev/null | grep -m 1 '1'; do
             echo "Waiting for emulator to boot..."
-          sleep 5
+            sleep 5
           done
           adb shell input keyevent 82
 
       - name: Run UI tests
         run: ./gradlew connectedAndroidTest
-
-
-
-
 
   build:
     needs: [lint, unit-tests]
@@ -206,6 +215,7 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
+
 
 
 
