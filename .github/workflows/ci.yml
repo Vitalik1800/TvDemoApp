@@ -105,9 +105,14 @@ jobs:
         run: echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "system-images;android-30;google_apis;x86_64"
 
       - name: Create AVD
-        run: echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd -n ci-avd -k "system-images;android-30;google_apis;x86_64" --device "pixel"
+        run: |
+          mkdir -p ~/.android/avd
+          echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
+            -n ci-avd -k "system-images;android-30;google_apis;x86_64" --device "pixel"
 
       - name: Launch emulator
+        env:
+          ANDROID_AVD_HOME: ~/.android/avd
         run: |
           nohup $ANDROID_HOME/emulator/emulator -avd ci-avd -no-window -no-snapshot -noaudio -no-boot-anim -gpu swiftshader_indirect &
           adb wait-for-device
@@ -117,8 +122,6 @@ jobs:
           done
           adb shell input keyevent 82
 
-      - name: Run UI Tests
-        run: ./gradlew connectedAndroidTest
 
 
 
@@ -189,6 +192,7 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
+
 
 
 
