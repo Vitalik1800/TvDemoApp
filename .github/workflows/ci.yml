@@ -81,7 +81,7 @@ jobs:
           name: unit-test-reports
           path: app/build/test-results/
 
-  androidTests:
+    androidTests:
     runs-on: macos-14
     steps:
       - name: Checkout
@@ -99,17 +99,17 @@ jobs:
       - name: Run Emulator and Instrumented Tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 30
+          api-level: 29
           target: google_apis
           arch: arm64-v8a
-          emulator-options: -no-snapshot -noaudio -no-boot-anim
+          force-avd-creation: true
+          emulator-options: -no-snapshot -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          emulator-boot-timeout: 600
+          emulator-boot-timeout: 1200
           script: ./gradlew connectedCheck
 
-
-
-
+      - name: Wait for emulator
+        run: adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 5; done'
 
   build:
     needs: [lint, unit-tests]
@@ -178,6 +178,7 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
+
 
 
 
