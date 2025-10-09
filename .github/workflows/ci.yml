@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - app
       - app-new*
   pull_request:
     branches:
@@ -46,7 +45,6 @@ jobs:
           path: |
             app/build/reports/lint-results-*.html
             app/build/reports/problems/problems-report.html
-
   unit-tests:
     runs-on: ubuntu-latest
     steps:
@@ -81,74 +79,67 @@ jobs:
           name: unit-test-reports
           path: app/build/test-results/
 
-  androidTests:
-    runs-on: macos-14
+  ui-tests:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: 17
+          java-version: '17'
+          distribution: 'adopt'
 
-      - name: Cache Gradle
-        uses: gradle/gradle-build-action@v2
-
-      - name: Cache Emulator Images
+      - name: Cache Gradle dependencies
         uses: actions/cache@v4
         with:
-          path: ~/.android/avd
-          key: emulator-${{ runner.os }}-api29-x86_64-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: emulator-${{ runner.os }}-api29-x86_64-
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
 
-      - name: Check Runner Resources
-        run: |
-          echo "CPU Info:"
-          sysctl -n machdep.cpu.brand_string
-          echo "Memory Info:"
-          system_profiler SPHardwareDataType | grep "Memory:"
-          echo "Disk Space:"
-          df -h
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
 
-      - name: Restart ADB Server
-        run: |
-          $ANDROID_HOME/platform-tools/adb kill-server
-          $ANDROID_HOME/platform-tools/adb start-server
-        env:
-          ANDROID_HOME: /Users/runner/Library/Android/sdk
-
-      - name: Debug ADB and Emulator
-        run: |
-          echo "ADB Devices:"
-          $ANDROID_HOME/platform-tools/adb devices
-          echo "ADB Logcat (boot-related):"
-          $ANDROID_HOME/platform-tools/adb logcat -d | grep -i "boot" || true
-          echo "Emulator Status:"
-          $ANDROID_HOME/platform-tools/adb shell getprop sys.boot_completed || true
-        if: always()
-        env:
-          ANDROID_HOME: /Users/runner/Library/Android/sdk
-
-      - name: Run Emulator and Instrumented Tests
+      - name: Run UI tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 29
-          target: default
+          api-level: 30
+          target: google_apis
           arch: x86_64
+          profile: pixel_4
+          cores: 4
+          ram-size: 4096M
+          disk-size: 2G
+          avd-name: test
           force-avd-creation: true
-          emulator-options: -no-snapshot -noaudio -no-boot-anim -camera-back none -memory 2048 -accel on
+          emulator-boot-timeout: 1200
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
-          emulator-boot-timeout: 300
-          script: ./gradlew connectedCheck --stacktrace --info
+          script: ./gradlew connectedFreeDebugAndroidTest connectedProDebugAndroidTest --stacktrace
 
-      - name: Upload Test Reports
+      - name: Upload UI test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: instrumented-test-reports
-          path: app/build/outputs/androidTest-results/
+          name: ui-test-reports
+          path: app/build/reports/androidTests/
+
+      - name: Debug emulator logs
+        if: failure()
+        run: |
+          adb logcat -d > emulator_logcat.txt
+          cat emulator_logcat.txt
+        continue-on-error: true
+
+      - name: Upload emulator logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emulator-logs
+          path: emulator_logcat.txt
 
 
   build:
@@ -188,17 +179,17 @@ jobs:
   release:
     needs: [build]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+  
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'adopt'
-
+  
       - name: Cache Gradle dependencies
         uses: actions/cache@v4
         with:
@@ -207,10 +198,10 @@ jobs:
             ~/.gradle/wrapper
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: gradle-${{ runner.os }}-
-
+  
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
-
+  
       - name: Build release APKs
         run: ./gradlew assembleFreeRelease assembleProRelease
         env:
@@ -218,3 +209,9 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
+  
+      - name: Upload release APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apks
+          path: app/build/outputs/apk/release/**/*.apk
