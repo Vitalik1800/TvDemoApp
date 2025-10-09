@@ -93,6 +93,14 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Set up Android SDK environment
+        run: |
+          echo "ANDROID_HOME=$HOME/Library/Android/sdk" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=$HOME/Library/Android/sdk" >> $GITHUB_ENV
+          echo "$HOME/Library/Android/sdk/platform-tools" >> $GITHUB_PATH
+          echo "$HOME/Library/Android/sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$HOME/Library/Android/sdk/emulator" >> $GITHUB_PATH
+
       - name: Install Android SDK components
         run: |
           sdkmanager --install "platform-tools"
@@ -109,7 +117,6 @@ jobs:
         run: |
           nohup emulator -avd ci-avd -no-snapshot -noaudio -no-boot-anim -gpu swiftshader_indirect -skin 1080x1920 &
           adb wait-for-device
-          # Очікуємо повного завантаження
           until adb shell getprop sys.boot_completed 2>/dev/null | grep -m 1 '1'; do
             echo "Waiting for emulator to boot..."
             sleep 5
@@ -118,6 +125,7 @@ jobs:
 
       - name: Run UI tests
         run: ./gradlew connectedAndroidTest
+
 
 
 
@@ -189,6 +197,7 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
+
 
 
 
