@@ -81,7 +81,7 @@ jobs:
           name: unit-test-reports
           path: app/build/test-results/
 
-    androidTests:
+  androidTests:
     runs-on: macos-14
     steps:
       - name: Checkout
@@ -176,6 +176,7 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
+
 
 
 
