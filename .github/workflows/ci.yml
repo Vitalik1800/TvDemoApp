@@ -82,9 +82,9 @@ jobs:
           path: app/build/test-results/
 
   ui-tests:
-  runs-on: ubuntu-latest   # або macos-latest, якщо хочеш Mac runner
+    runs-on: ubuntu-latest   # або macos-latest, якщо хочеш Mac runner
 
-  steps:
+    steps:
     - uses: actions/checkout@v4
 
     - name: Set up JDK 17
@@ -199,6 +199,7 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
+
 
 
 
