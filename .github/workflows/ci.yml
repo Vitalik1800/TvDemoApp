@@ -83,7 +83,6 @@ jobs:
 
   ui-tests:
     runs-on: macos-latest
-
     steps:
       - uses: actions/checkout@v3
 
@@ -108,17 +107,17 @@ jobs:
           yes | sdkmanager --licenses
           sdkmanager --install "platform-tools"
           sdkmanager --install "platforms;android-30"
-          sdkmanager --install "system-images;android-30;google_apis;x86_64"
+          sdkmanager --install "system-images;android-30;google_apis;arm64-v8a"
           sdkmanager --install "emulator"
 
       - name: Create AVD
         run: |
-          echo "no" | avdmanager create avd -n ci-avd -k "system-images;android-30;google_apis;x86_64" --force
+          echo "no" | avdmanager create avd -n ci-avd -k "system-images;android-30;google_apis;arm64-v8a" --force
           emulator -list-avds
 
       - name: Start emulator
         run: |
-          nohup emulator -avd ci-avd -no-snapshot -noaudio -no-boot-anim -gpu swiftshader_indirect -skin 1080x1920 &
+          nohup emulator -avd ci-avd -no-window -no-snapshot -noaudio -no-boot-anim -gpu swiftshader_indirect -skin 1080x1920 &
           adb wait-for-device
           until adb shell getprop sys.boot_completed 2>/dev/null | grep -m 1 '1'; do
             echo "Waiting for emulator to boot..."
@@ -128,10 +127,6 @@ jobs:
 
       - name: Run UI tests
         run: ./gradlew connectedAndroidTest
-
-
-
-
 
   build:
     needs: [lint, unit-tests]
@@ -200,10 +195,3 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
-
-
-
-
-
-
-
