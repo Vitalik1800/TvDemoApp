@@ -121,3 +121,11 @@ afterEvaluate {
     tasks.matching { it.name.contains("processPro") && it.name.contains("GoogleServices") }
         .configureEach { enabled = false }
 }
+
+afterEvaluate {
+    tasks.matching { it.name.contains("uploadCrashlyticsMappingFileProRelease") }
+        .configureEach { enabled = false }
+
+    tasks.matching { it.name.contains("processProReleaseGoogleServices") }
+        .configureEach { enabled = false }
+}
