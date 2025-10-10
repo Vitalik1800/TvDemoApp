@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.google.gms.google.services)
     alias(libs.plugins.firebase.crashlytics)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -27,11 +28,13 @@ android {
             dimension = "type"
             applicationIdSuffix = ".free"
             versionNameSuffix = "-free"
+            resValue("string", "app_name", "TvDemoApp Free")
         }
         create("pro") {
             dimension = "type"
             applicationIdSuffix = ".pro"
             versionNameSuffix = "-pro"
+            resValue("string", "app_name", "TvDemoApp Pro")
         }
     }
 
@@ -72,6 +75,10 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.common)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
     // AndroidX
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.leanback)
@@ -107,6 +114,7 @@ dependencies {
     testRuntimeOnly(libs.junit.jupiter.api)
     testImplementation(libs.junit)
     testImplementation(kotlin("test"))
+    testImplementation(libs.kotlinx.coroutines.test)
 }
 
 afterEvaluate {
