@@ -1,31 +1,25 @@
 package com.vs18.tvdemoapp
 
-import android.content.Intent
-import android.graphics.Color
-import android.graphics.drawable.Drawable
-import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.util.DisplayMetrics
-import android.util.Log
-import android.view.Gravity
-import android.view.ViewGroup
-import android.widget.TextView
-import android.widget.Toast
-import androidx.core.app.ActivityOptionsCompat
-import androidx.core.content.ContextCompat
-import androidx.leanback.app.BackgroundManager
-import androidx.leanback.app.BrowseSupportFragment
+import android.content.*
+import android.graphics.*
+import android.graphics.drawable.*
+import android.os.*
+import android.util.*
+import android.view.*
+import android.view.animation.AlphaAnimation
+import android.widget.*
+import androidx.core.app.*
+import androidx.core.content.*
+import androidx.leanback.app.*
 import androidx.leanback.widget.*
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.target.SimpleTarget
-import com.bumptech.glide.request.transition.Transition
-import com.google.firebase.crashlytics.FirebaseCrashlytics
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import com.bumptech.glide.*
+import com.bumptech.glide.request.target.*
+import com.bumptech.glide.request.transition.*
+import com.google.firebase.*
+import com.google.firebase.crashlytics.*
+import com.google.firebase.remoteconfig.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.catch
 import java.util.*
 
 @Suppress("DEPRECATION")
@@ -38,28 +32,73 @@ class MainFragment : BrowseSupportFragment() {
     private var backgroundTimer: Timer? = null
     private var backgroundUri: String? = null
     private val repository by lazy {
-        MovieRepository((requireActivity().application as TvDemoApp).database.movieDao())
+        MovieRepository((requireActivity().application as TvDemoApp).database.movieDao(), requireContext())
     }
     private val scope = CoroutineScope(Dispatchers.Main + Job())
     private lateinit var adapter: ArrayObjectAdapter
-    private var staticRowsLoaded = false // Флаг для статичних рядків
+    private var staticRowsLoaded = false
+    private lateinit var remoteCongig: FirebaseRemoteConfig
+    private var backgroundJob: Job? = null
+    private var isOfflineMode = false
 
+    @Deprecated("Deprecated in Java")
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         Log.i(TAG, "onCreate")
         super.onActivityCreated(savedInstanceState)
 
         adapter = ArrayObjectAdapter(ListRowPresenter())
-        setAdapter(adapter) // Встановлюємо адаптер
+        setAdapter(adapter)
+
+        remoteCongig = Firebase.remoteConfig
+        val configSettings = remoteConfigSettings {
+            minimumFetchIntervalInSeconds = 3600
+        }
+        remoteCongig.setConfigSettingsAsync(configSettings)
+
+        title = "Loading..."
+        remoteCongig.fetch(10)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    remoteCongig.activate().addOnCompleteListener { activateTask ->
+                        if (activateTask.isSuccessful) {
+                            val appTitle = remoteCongig.getString("catalog_title").ifEmpty { "TvDemoApp" }
+                            animateTitleChange(appTitle)
+                            Log.d(TAG, "Remote Config title: $appTitle")
+                        } else {
+                            animateTitleChange("TvDemoApp")
+                            Log.e(TAG, "Failed to fetch Remote Config")
+                            FirebaseCrashlytics.getInstance().recordException(Exception("Failed to activate Remote Config"))
+                        }
+                    }
+                } else {
+                    animateTitleChange("TvDemoApp")
+                    Log.e(TAG, "Failed to fetch Remote Config")
+                    FirebaseCrashlytics.getInstance().recordException(Exception("Failed to fetch Remote Config"))
+                }
+            }
 
         scope.launch {
-            repository.getMoviesFromNetwork().collect { movies ->
+            repository.getMoviesFromNetwork().catch { e->
+                Log.e(TAG, "Failed to collect movies from network: ${e.message}", e)
+                FirebaseCrashlytics.getInstance().recordException(e)
+                updateAdapter(emptyList())
+                isOfflineMode = true
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "No internet connection. Showing offline movies.", Toast.LENGTH_LONG).show()
+                }
+            }.collect { movies ->
                 Log.d(TAG, "Movies from network: $movies")
+                isOfflineMode = movies.all { it.videoUrl!!.isEmpty() }
                 updateAdapter(movies)
             }
         }
 
         scope.launch {
-            repository.movieState.collect { movies ->
+            repository.movieState.catch { e ->
+                Log.e(TAG, "Failed to collect movie state: ${e.message}", e)
+                FirebaseCrashlytics.getInstance().recordException(e)
+                updateAdapter(emptyList())
+            }.collect { movies ->
                 Log.d(TAG, "Movies from state: $movies")
                 updateAdapter(movies)
             }
@@ -70,18 +109,35 @@ class MainFragment : BrowseSupportFragment() {
                 Log.d(TAG, "Movie selected: ${movie.title}")
                 val intent = Intent(requireContext(), DetailsActivity::class.java).apply {
                     putExtra(DetailsActivity.MOVIE, movie)
+                    putExtra(DetailsActivity.IS_OFFLINE_MODE, isOfflineMode)
                 }
                 startActivity(intent)
             }
         }
 
-        title = "Loading..."
         headersState = HEADERS_ENABLED
 
         prepareBackgroundManager()
         setupUIElements()
         setupEventListeners()
-        loadRows() // Завантажуємо статичні рядки одразу
+        loadRows()
+    }
+
+    private fun animateTitleChange(newTitle: String) {
+        val fadeOut = AlphaAnimation(1.0f, 0.0f).apply {
+            duration = 1000
+            fillAfter = true
+        }
+        val fadeIn = AlphaAnimation(0.0f, 1.0f).apply {
+            duration = 1000
+            fillAfter = true
+        }
+
+        titleView?.startAnimation(fadeOut)
+        handler.postDelayed({
+            title = newTitle
+            titleView?.startAnimation(fadeIn)
+        }, 300)
     }
 
     override fun onDestroy() {
@@ -93,7 +149,6 @@ class MainFragment : BrowseSupportFragment() {
     private fun updateAdapter(movies: List<Movie>) {
         Log.d(TAG, "Updating adapter with movies: $movies")
 
-        // Зберігаємо статичні рядки
         val staticRows = mutableListOf<Row>()
         for (i in 0 until adapter.size()) {
             val row = adapter.get(i) as? Row
@@ -107,18 +162,16 @@ class MainFragment : BrowseSupportFragment() {
             val rowAdapter = ArrayObjectAdapter(CardPresenter()).apply {
                 addAll(0, movies)
             }
-            adapter.add(ListRow(HeaderItem(0, "Movies"), rowAdapter))
+            adapter.add(ListRow(HeaderItem(0,if(isOfflineMode) "Offline Movies" else "Movies"), rowAdapter))
         }
 
-        // Додаємо назад статичні рядки
         staticRows.forEach { adapter.add(it) }
 
-        // Завантажуємо статичні рядки, якщо вони ще не додані
         if (!staticRowsLoaded) {
             loadRows()
         }
 
-        setAdapter(adapter) // Оновлюємо адаптер
+        setAdapter(adapter)
         Log.d(TAG, "Adapter updated, size: ${adapter.size()}")
     }
 
@@ -138,7 +191,7 @@ class MainFragment : BrowseSupportFragment() {
     }
 
     private fun loadRows() {
-        if (staticRowsLoaded) return // Запобігаємо повторному додаванню
+        if (staticRowsLoaded) return
         staticRowsLoaded = true
 
         val list = MovieList.list
@@ -165,7 +218,7 @@ class MainFragment : BrowseSupportFragment() {
         gridRowAdapter.add(resources.getString(R.string.personal_settings))
         adapter.add(ListRow(gridHeader, gridRowAdapter))
 
-        setAdapter(adapter) // Оновлюємо адаптер
+        setAdapter(adapter)
         Log.d(TAG, "Static rows loaded: ${MovieList.MOVIE_CATEGORY.asList() + "PREFERENCES"}, adapter size: ${adapter.size()}")
     }
 
@@ -224,6 +277,7 @@ class MainFragment : BrowseSupportFragment() {
     }
 
     private fun updateBackground(uri: String?) {
+
         val width = metrics.widthPixels
         val height = metrics.heightPixels
         Glide.with(requireActivity())
@@ -239,9 +293,13 @@ class MainFragment : BrowseSupportFragment() {
     }
 
     private fun startBackgroundTimer() {
-        backgroundTimer?.cancel()
-        backgroundTimer = Timer()
-        backgroundTimer?.schedule(UpdateBackgroundTask(), BACKGROUND_UPDATE_DELAY.toLong())
+        backgroundJob?.cancel()
+        backgroundJob = scope.launch {
+            delay(BACKGROUND_UPDATE_DELAY.toLong())
+            if (isAdded) {
+               updateBackground(backgroundUri)
+            }
+        }
     }
 
     private inner class UpdateBackgroundTask : TimerTask() {

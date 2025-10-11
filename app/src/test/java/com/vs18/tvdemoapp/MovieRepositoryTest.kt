@@ -1,5 +1,9 @@
 package com.vs18.tvdemoapp
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
 import android.os.Build
 import io.mockk.*
 import kotlinx.coroutines.*
@@ -20,13 +24,16 @@ import kotlin.test.*
 class MovieRepositoryTest {
 
     private val movieDao = mockk<MovieDao>()
+    private val context = mockk<Context>()
+    private val connectivityManager = mockk<ConnectivityManager>()
     private lateinit var repository: MovieRepository
 
     @Before
     fun setup() {
         Dispatchers.setMain(Dispatchers.Unconfined)
         coEvery { movieDao.getAll() } returns flowOf(emptyList())
-        repository = MovieRepository(movieDao)
+        every { context.getSystemService(Context.CONNECTIVITY_SERVICE) } returns connectivityManager
+        repository = MovieRepository(movieDao, context)
     }
 
     @After
@@ -35,7 +42,14 @@ class MovieRepositoryTest {
     }
 
     @Test
-    fun `getMoviesFromNetwork emits movies and caches them`() = runTest {
+    fun `getMoviesFromNetwork emits movies and caches them when network available`() = runTest {
+        // Налаштування моків для мережі
+        val network = mockk<Network>()
+        val capabilities = mockk<NetworkCapabilities>()
+        every { connectivityManager.activeNetwork } returns network
+        every { connectivityManager.getNetworkCapabilities(network) } returns capabilities
+        every { capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) } returns true
+
         val movies = listOf(
             Movie(
                 id = 1,
@@ -90,6 +104,9 @@ class MovieRepositoryTest {
 
     @Test
     fun `getMoviesFromNetwork falls back to Room on network failure`() = runTest {
+        // Налаштування моків для відсутності мережі
+        every { connectivityManager.activeNetwork } returns null
+
         val movies = listOf(
             Movie(id = 1, title = "Test Movie", videoUrl = "https://example.com")
         )
@@ -102,4 +119,40 @@ class MovieRepositoryTest {
         assertEquals(movies, emittedMovies.first())
     }
 
+    @Test
+    fun `getMoviesFromNetwork returns offline movies when no network`() = runTest {
+        // Налаштування моків для відсутності мережі
+        every { connectivityManager.activeNetwork } returns null
+        coEvery { movieDao.getAll() } returns flowOf(emptyList())
+        coEvery { movieDao.insertAll(any()) } returns Unit
+
+        val expectedOfflineMovies = listOf(
+            Movie(
+                id = 1001,
+                title = "Offline Movie 1: The Adventure",
+                description = "A placeholder adventure movie for offline mode",
+                backgroundImageUrl = "",
+                cardImageUrl = "",
+                videoUrl = "",
+                studio = "Local Studio",
+                subtitleUrl = ""
+            ),
+            Movie(
+                id = 1002,
+                title = "Offline Movie 2: The Mystery",
+                description = "A placeholder mystery movie for offline mode",
+                backgroundImageUrl = "",
+                cardImageUrl = "",
+                videoUrl = "",
+                studio = "Local Studio",
+                subtitleUrl = ""
+            )
+        )
+
+        val emittedMovies = mutableListOf<List<Movie>>()
+        repository.getMoviesFromNetwork().collect { emittedMovies.add(it) }
+
+        assertEquals(expectedOfflineMovies, emittedMovies.first())
+        coVerify { movieDao.insertAll(expectedOfflineMovies) }
+    }
 }

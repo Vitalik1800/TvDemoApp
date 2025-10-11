@@ -1,8 +1,12 @@
 package com.vs18.tvdemoapp
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.*
 import android.view.*
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
@@ -16,8 +20,8 @@ import com.google.firebase.crashlytics.*
 @Suppress("DEPRECATION")
 class PlaybackVideoFragment : Fragment() {
 
-    private var player: SimpleExoPlayer? = null
-    private lateinit var playerView: PlayerView
+    var player: SimpleExoPlayer? = null
+    lateinit var playerView: PlayerView
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -47,9 +51,22 @@ class PlaybackVideoFragment : Fragment() {
         }
 
         val movie: Movie? = activity?.intent?.getParcelableExtra<Movie>(DetailsActivity.MOVIE)
-        if (movie == null || movie.videoUrl == null) {
+        val isOfflineMode = activity?.intent?.getBooleanExtra(DetailsActivity.IS_OFFLINE_MODE, false) ?: false
+
+        if (movie == null || movie.videoUrl.isNullOrEmpty()) {
+            FirebaseCrashlytics.getInstance().log("No movie data or video URL in PlaybackVideoFragment")
+            Toast.makeText(requireContext(), "Error: No movie data", Toast.LENGTH_LONG).show()
+            requireActivity().finish()
             return
         }
+
+        if (isOfflineMode || !isNetworkAvailable()) {
+            FirebaseCrashlytics.getInstance().log("Attempted to play video offline: ${movie.title}")
+            Toast.makeText(requireContext(), "Video playback is unavailable in offline mode.", Toast.LENGTH_LONG).show()
+            requireActivity().finish()
+            return
+        }
+
         val title = movie.title ?: "Playback"
 
         val httpDataSourceFactory = DefaultHttpDataSource.Factory()
@@ -64,18 +81,21 @@ class PlaybackVideoFragment : Fragment() {
 
                 val builder = MediaItem.Builder().setUri(movie.videoUrl)
 
-                movie.subtitleUrl?.let { subs ->
-                    val subtitleConfig = MediaItem.SubtitleConfiguration.Builder(subs.toUri())
-                        .setMimeType(MimeTypes.TEXT_VTT)
-                        .setLanguage("en")
-                        .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
-                        .build()
-
-                    builder.setSubtitleConfigurations(listOf(subtitleConfig))
+                movie.subtitleUrl?.takeIf { it.isNotEmpty() }?.let { subs ->
+                    try {
+                        val subtitleConfig = MediaItem.SubtitleConfiguration.Builder(subs.toUri())
+                            .setMimeType(MimeTypes.TEXT_VTT)
+                            .setLanguage("en")
+                            .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
+                            .build()
+                        builder.setSubtitleConfigurations(listOf(subtitleConfig))
+                    } catch (e: Exception) {
+                        FirebaseCrashlytics.getInstance().recordException(e)
+                        Toast.makeText(requireContext(), "Failed to load subtitles for $title", Toast.LENGTH_LONG).show()
+                    }
                 }
 
                 val mediaItem = builder.build()
-
                 exoPlayer.setMediaItem(mediaItem)
                 exoPlayer.prepare()
                 exoPlayer.playWhenReady = true
@@ -84,6 +104,14 @@ class PlaybackVideoFragment : Fragment() {
         FirebaseCrashlytics.getInstance().log("Playing video: $title")
     }
 
+    private fun isNetworkAvailable(): Boolean {
+        val connectivityManager = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
+
     override fun onPause() {
         super.onPause()
         player?.pause()
@@ -91,7 +119,9 @@ class PlaybackVideoFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        player?.release()
         playerView.player = null
+        player = null
     }
 
     override fun onDestroy() {

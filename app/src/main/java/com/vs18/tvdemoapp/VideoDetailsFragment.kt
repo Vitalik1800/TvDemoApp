@@ -2,6 +2,8 @@ package com.vs18.tvdemoapp
 
 import android.content.*
 import android.graphics.drawable.Drawable
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.*
 import android.util.*
 import android.widget.*
@@ -21,12 +23,15 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private var selectedMovie: Movie? = null
     private lateinit var presenterSelector: ClassPresenterSelector
     private lateinit var adapter: ArrayObjectAdapter
+    private var isOfflineMode: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d(TAG, "onCreate DetailsFragment")
         super.onCreate(savedInstanceState)
 
         selectedMovie = activity?.intent?.getParcelableExtra(DetailsActivity.MOVIE)
+        isOfflineMode = activity?.intent?.getBooleanExtra(DetailsActivity.IS_OFFLINE_MODE, false) ?: false
+
         if (selectedMovie != null) {
             presenterSelector = ClassPresenterSelector()
             adapter = ArrayObjectAdapter(presenterSelector)
@@ -37,6 +42,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             setAdapter(adapter)
             FirebaseCrashlytics.getInstance().log("Opened details for movie: ${selectedMovie?.title}")
         } else {
+            FirebaseCrashlytics.getInstance().log("No movie data provided in VideoDetailsFragment")
+            Toast.makeText(requireContext(), "Error: No movie data", Toast.LENGTH_LONG).show()
             val intent = Intent(activity, MainActivity::class.java)
             startActivity(intent)
         }
@@ -59,13 +66,18 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             })
 
         val actionAdapter = ArrayObjectAdapter()
-        actionAdapter.add(
-            Action(
-                ACTION_WATCH,
-                resources.getString(R.string.watch),
-                resources.getString(R.string.watch_description)
+        if (!isOfflineMode && isNetworkAvailable() && !selectedMovie!!.videoUrl!!.isEmpty()) {
+            actionAdapter.add(
+                Action(
+                    ACTION_WATCH,
+                    resources.getString(R.string.watch),
+                    resources.getString(R.string.watch_description)
+                )
             )
-        )
+        } else {
+            FirebaseCrashlytics.getInstance().log("Video playback unavailable for: ${selectedMovie?.title}")
+            Toast.makeText(requireContext(), "Video playback is unavailable in offline mode.", Toast.LENGTH_LONG).show()
+        }
         row.actionsAdapter = actionAdapter
         adapter.add(row)
     }
@@ -79,6 +91,11 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         detailsPresenter.isParticipatingEntranceTransition = true
         detailsPresenter.onActionClickedListener = OnActionClickedListener { action ->
             if (action.id == ACTION_WATCH) {
+                if (!isNetworkAvailable() || selectedMovie!!.videoUrl!!.isEmpty()) {
+                    Toast.makeText(requireContext(), "Video playback is unavailable in offline mode.", Toast.LENGTH_LONG).show()
+                    FirebaseCrashlytics.getInstance().log("Attempted to play video offline: ${selectedMovie?.title}")
+                    return@OnActionClickedListener
+                }
                 val intent = Intent(activity, PlaybackActivity::class.java)
                 intent.putExtra(DetailsActivity.MOVIE, selectedMovie)
                 startActivity(intent)
@@ -103,6 +120,13 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         presenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
     }
 
+    private fun isNetworkAvailable(): Boolean {
+        val connectivityManager = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
     private fun convertDpToPixel(context: Context, dp: Int) : Int {
         val density = context.applicationContext.resources.displayMetrics.density
         return (dp.toFloat() * density).roundToInt()
@@ -118,6 +142,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             if (item is Movie) {
                 val intent = Intent(activity, DetailsActivity::class.java)
                 intent.putExtra(DetailsActivity.MOVIE, item)
+                intent.putExtra(DetailsActivity.IS_OFFLINE_MODE, isOfflineMode)
                 val bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(
                     requireActivity(),
                     (itemViewHolder?.view as ImageCardView).mainImageView!!,

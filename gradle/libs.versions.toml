@@ -27,7 +27,9 @@ constraintlayout = "2.2.1"
 robolectricVersion = "4.16"
 roomRuntimeVersion = "2.8.1"
 runner = "1.7.0"
-room = "2.8.1" # Єдина версія для всіх бібліотек Room
+room = "2.8.1"
+mockkVersion = "1.14.3"
+mockkAgentJvm = "1.14.3" # Єдина версія для всіх бібліотек Room
 
 [libraries]
 # AndroidX
@@ -71,6 +73,8 @@ androidx-activity = { group = "androidx.activity", name = "activity", version.re
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 #noinspection SimilarGradleDependency
 robolectric-v4122 = { module = "org.robolectric:robolectric", version.ref = "robolectricVersion" }
+mockk-mockk = { group = "io.mockk", name = "mockk", version.ref = "mockkVersion" }
+mockk-agent-jvm = { group = "io.mockk", name = "mockk-agent-jvm", version.ref = "mockkAgentJvm" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

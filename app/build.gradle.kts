@@ -78,6 +78,8 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.common)
     implementation(libs.androidx.room.ktx)
+    testImplementation(libs.mockk.mockk)
+    testImplementation(libs.mockk.agent.jvm)
     ksp(libs.androidx.room.compiler)
     // AndroidX
     implementation(libs.androidx.core.ktx)
@@ -119,5 +121,13 @@ dependencies {
 
 afterEvaluate {
     tasks.matching { it.name.contains("processPro") && it.name.contains("GoogleServices") }
+        .configureEach { enabled = false }
+}
+
+afterEvaluate {
+    tasks.matching { it.name.contains("uploadCrashlyticsMappingFileProRelease") }
+        .configureEach { enabled = false }
+
+    tasks.matching { it.name.contains("processProReleaseGoogleServices") }
         .configureEach { enabled = false }
 }

@@ -1,14 +1,58 @@
 package com.vs18.tvdemoapp
 
+import android.content.*
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.util.*
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.io.*
 
 class MovieRepository(
-    private val movieDao: MovieDao
+    private val movieDao: MovieDao,
+    private val context: Context
 ) {
 
+    private fun getOfflineMovies(): List<Movie> = listOf(
+        Movie(
+            id = 1001,
+            title = "Offline Movie 1: The Adventure",
+            description = "A placeholder adventure movie for offline mode",
+            backgroundImageUrl = "",
+            cardImageUrl = "",
+            videoUrl = "",
+            studio = "Local Studio",
+            subtitleUrl = ""
+        ),
+        Movie(
+            id = 1002,
+            title = "Offline Movie 2: The Mystery",
+            description = "A placeholder mystery movie for offline mode",
+            backgroundImageUrl = "",
+            cardImageUrl = "",
+            videoUrl = "",
+            studio = "Local Studio",
+            subtitleUrl = ""
+        )
+    )
+
+    private fun isNetworkAvailable(): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
     fun getMoviesFromNetwork(): Flow<List<Movie>> = flow {
+        if (!isNetworkAvailable()) {
+            val offlineMovies = getOfflineMovies()
+            Log.d("MovieRepository", "No network, returning offline movies: $offlineMovies")
+            movieDao.insertAll(offlineMovies)
+            emit(offlineMovies)
+            return@flow
+        }
+
         delay(1000)
         val movies = listOf(
             Movie(
@@ -52,15 +96,17 @@ class MovieRepository(
                 subtitleUrl = "https://raw.githubusercontent.com/Vitalik1800/SubtitlesVS18/refs/heads/main/tears_of_steel.vvt"
             )
         )
+        Log.d("MovieRepository", "Network request successful: $movies")
         movieDao.insertAll(movies)
         emit(movies)
     }.catch { e ->
-        if (e is Exception) {
-            emitAll(movieDao.getAll())
-        } else {
-            throw e
+        Log.e("MovieRepository", "Network request failed: ${e.message}", e)
+        val localMovies = withContext(Dispatchers.IO) {
+            movieDao.getAll().firstOrNull() ?: getOfflineMovies()
         }
-    }
+        Log.d("MovieRepository", "Returning local movies: $localMovies")
+        emit(localMovies)
+    }.flowOn(Dispatchers.IO)
 
     val movieState: StateFlow<List<Movie>> = movieDao.getAll()
         .stateIn(

@@ -5,6 +5,7 @@ import androidx.fragment.app.*
 
 class DetailsActivity : FragmentActivity() {
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_details)
@@ -19,5 +20,6 @@ class DetailsActivity : FragmentActivity() {
     companion object {
         const val SHARED_ELEMENT_NAME = "hero"
         const val MOVIE = "Movie"
+        const val IS_OFFLINE_MODE = "is_offline_mode"
     }
 }

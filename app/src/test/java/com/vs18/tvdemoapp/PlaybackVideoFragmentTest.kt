@@ -13,6 +13,8 @@ import org.junit.*
 import org.junit.runner.*
 import org.robolectric.*
 import org.robolectric.annotation.*
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 @Suppress("DEPRECATION")
@@ -28,6 +30,7 @@ class PlaybackVideoFragmentTest {
     private val mockLayoutInflater = mockk<LayoutInflater>()
     private val mockContainer = mockk<ViewGroup>()
     private val mockCrashlytics = mockk<FirebaseCrashlytics>(relaxed = true)
+
 
     private val movie: Movie = Movie(
         id = 1,
@@ -45,12 +48,13 @@ class PlaybackVideoFragmentTest {
         every { mockCrashlytics.log(any()) } just Runs
 
         mockkConstructor(SimpleExoPlayer.Builder::class)
-        every { anyConstructed<SimpleExoPlayer.Builder>().build() } returns mockPlayer
+        every { anyConstructed<SimpleExoPlayer.Builder>().build() } returns mockPlayer  // 🟢 важливо!
 
         every { mockActivity.intent } returns mockIntent
+        every { mockActivity.finish() } just Runs
         every { mockIntent.getParcelableExtra<Movie>(DetailsActivity.MOVIE) } returns movie
+        every { mockIntent.getBooleanExtra(DetailsActivity.IS_OFFLINE_MODE, any()) } returns false
         every { fragment.activity } returns mockActivity
-
         every { mockLayoutInflater.inflate(any<Int>(), any(), any()) } returns mockPlayerView
         every { mockPlayerView.context } returns mockActivity
         every { fragment.requireContext() } returns ApplicationProvider.getApplicationContext()
@@ -72,10 +76,12 @@ class PlaybackVideoFragmentTest {
         every { mockPlayer.prepare() } just Runs
         every { mockPlayer.playWhenReady = any() } just Runs
         every { mockPlayerView.player = any() } just Runs
-
         every { fragment.activity } returns mockActivity
         every { mockActivity.intent } returns mockIntent
         every { mockIntent.getParcelableExtra<Movie>(DetailsActivity.MOVIE) } returns movie
+        every { mockIntent.getBooleanExtra(DetailsActivity.IS_OFFLINE_MODE, false) } returns false
+
+        every { fragment["isNetworkAvailable"]() } returns true
 
         fragment.onCreateView(mockLayoutInflater, mockContainer, null)
         fragment.onViewCreated(mockPlayerView, null)
@@ -88,49 +94,76 @@ class PlaybackVideoFragmentTest {
         verify { mockCrashlytics.log("Playing video: Test Movie") }
     }
 
+
+
+
     @Test
     fun onViewCreated_handlesMissingVideoUrlGracefully_unit() {
         val movieNoUrl = Movie(id = 2, title = "No URL Movie", videoUrl = null, subtitleUrl = null)
         every { mockIntent.getParcelableExtra<Movie>(DetailsActivity.MOVIE) } returns movieNoUrl
+        every { mockIntent.getBooleanExtra(DetailsActivity.IS_OFFLINE_MODE, false) } returns false
 
         fragment.onCreateView(mockLayoutInflater, mockContainer, null)
         fragment.onViewCreated(mockPlayerView, null)
 
+        // Player не має стартувати
         verify(exactly = 0) { mockPlayer.setMediaItem(any()) }
         verify(exactly = 0) { mockPlayerView.player = any() }
-        verify(exactly = 0) { mockCrashlytics.log(any()) }
+
+        // Crashlytics має залогувати відсутність URL
+        verify(exactly = 1) { mockCrashlytics.log("No movie data or video URL in PlaybackVideoFragment") }
     }
+
 
     @Test
     fun onPause_pausesPlayer() {
         every { mockPlayer.setMediaItem(any()) } just Runs
         every { mockPlayer.prepare() } just Runs
         every { mockPlayer.playWhenReady = any() } just Runs
+        every { mockPlayer.pause() } just Runs
         every { mockPlayerView.player = any() } just Runs
 
         every { mockIntent.getParcelableExtra<Movie>(DetailsActivity.MOVIE) } returns movie
+        every { mockIntent.getBooleanExtra(DetailsActivity.IS_OFFLINE_MODE, false) } returns false
 
         fragment.onCreateView(mockLayoutInflater, mockContainer, null)
         fragment.onViewCreated(mockPlayerView, null)
+
+        fragment.player = mockPlayer
+
         fragment.onPause()
 
-        verify { mockPlayer.pause() }
+        verify(exactly = 1) { mockPlayer.pause() }
     }
 
+
     @Test
-    fun onDestroy_releasesPlayer() {
+    fun onDestroyView_releasesPlayer() {
         every { mockPlayerView.player = any() } just Runs
         every { mockPlayer.release() } just Runs
-
         every { mockIntent.getParcelableExtra<Movie>(DetailsActivity.MOVIE) } returns movie
+        every { mockIntent.getBooleanExtra(DetailsActivity.IS_OFFLINE_MODE, any()) } returns false
+        every { fragment["isNetworkAvailable"]() } returns true
 
+        // Емуляція звичайного життєвого циклу фрагмента
         fragment.onCreateView(mockLayoutInflater, mockContainer, null)
         fragment.onViewCreated(mockPlayerView, null)
 
-        fragment.onDestroy()
+        // Призначаємо мокований плеєр
+        fragment.player = mockPlayer
 
-        verify { mockPlayer.release() }
+        // Виклик onDestroyView
+        fragment.onDestroyView()
+
+        // Перевіряємо, що ресурси очищено
+        verify(exactly = 1) { mockPlayer.release() }
+        verify { mockPlayerView.player = null }
+
+        assertEquals(null, fragment.player)
     }
+
+
+
 
     @Test
     fun onCreateView_withLaunchFragmentInContainer() {
@@ -151,21 +184,23 @@ class PlaybackVideoFragmentTest {
     }
 
     @Test
-    fun onViewCreated_handlesMissingVideoUrlGracefully_integration() {
+    fun onViewCreated_handlesMissingVideoUrlGracefully() {
         val movie = Movie(id = 3, title = "Integration Movie", videoUrl = null, subtitleUrl = null)
 
         val fragment = spyk<PlaybackVideoFragment>()
+        every { fragment.requireContext() } returns ApplicationProvider.getApplicationContext()
 
-        fragment.arguments = Bundle().apply {
-            putParcelable(DetailsActivity.MOVIE, movie)
+        val mockActivity = mockk<FragmentActivity>(relaxed = true)
+        every { mockActivity.intent } returns mockk(relaxed = true) {
+            every { getParcelableExtra<Movie>(DetailsActivity.MOVIE) } returns movie
+            every { getBooleanExtra(DetailsActivity.IS_OFFLINE_MODE, false) } returns false
         }
+        every { fragment.requireActivity() } returns mockActivity
 
         val mockPlayerView = mockk<PlayerView>(relaxed = true)
-
-        every { fragment.onCreateView(any<LayoutInflater>(), any<ViewGroup>(), any()) } returns mockPlayerView
-
         fragment.onViewCreated(mockPlayerView, null)
 
-        assertTrue(mockPlayerView is PlayerView)
+        verify { mockActivity.finish() }
     }
+
 }
