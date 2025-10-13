@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.google.gms.google.services)
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.ksp)
+    id("org.jetbrains.kotlin.plugin.compose") version "2.2.20"
 }
 
 android {
@@ -58,6 +59,10 @@ android {
         }
     }
 
+    buildFeatures {
+        compose = true
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -75,21 +80,31 @@ android {
 }
 
 dependencies {
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.common)
-    implementation(libs.androidx.room.ktx)
+    implementation(libs.exoplayer.ui)
+    implementation(libs.exoplayer.core)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material)
+    implementation(libs.androidx.runtime)
+    implementation(libs.androidx.ui)
+    implementation(libs.insert.koin.koin.android) // або новішу версію
+    implementation(libs.koin.core)
+    implementation(project(":core"))
+    implementation(project(":player"))
+    implementation(project(":ui"))
+    implementation(libs.androidx.material3)
+    implementation(libs.coil.kt.coil)
+    implementation(libs.io.coil.kt.coil.gif)
+    implementation(libs.io.coil.kt.coil.svg)
     testImplementation(libs.mockk.mockk)
     testImplementation(libs.mockk.agent.jvm)
-    ksp(libs.androidx.room.compiler)
     // AndroidX
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.leanback)
 
     // UI/Media
     implementation(libs.glide)
-    implementation(libs.exoplayer.core)
     implementation(libs.exoplayer.hls)
-    implementation(libs.exoplayer.ui)
 
     // Firebase (через BoM)
     implementation(platform(libs.firebase.bom))

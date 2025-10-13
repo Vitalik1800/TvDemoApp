@@ -1,6 +1,7 @@
 package com.vs18.tvdemoapp
 
 import androidx.leanback.widget.*
+import com.vs18.tvdemoapp.core.model.*
 
 class DetailsDescriptionPresenter : AbstractDetailsDescriptionPresenter() {
 

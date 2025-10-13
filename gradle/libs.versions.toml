@@ -1,5 +1,25 @@
 [versions]
+activityCompose = "1.11.0"
 agp = "8.12.3"
+coil = "3.3.0"
+coil3 = "3.0.0"
+coil3Compose = "3.0.0"
+coil3Gif = "3.0.0"
+coil3Svg = "3.0.0"
+coil3Video = "3.0.0"
+coilCompose = "3.3.0"
+coilComposeVersion = "3.3.0"
+coilDecode = "3.3.0"
+coilGif = "3.0.0"
+coilGifVersion = "3.3.0"
+coilKtCoilVersion = "x.y.z"
+coilSvg = "3.3.0"
+coilSvgVersion = "3.0.0"
+coilVersion = "3.3.0"
+coilVideo = "3.0.0"
+koinAndroid = "3.4.3"
+koinAndroidVersion = "4.1.1"
+koinCore = "4.1.1"
 kotlinxCoroutinesTest = "1.10.2"
 ksp = "2.2.20-2.0.3"
 espressoCoreVersion = "3.7.0"
@@ -17,6 +37,8 @@ junit = "4.13.2"
 #espressoCore = "3.7.0"
 appcompat = "1.7.1"
 material = "1.13.0"
+material3Version = "1.5.0-alpha06"
+materialVersion = "1.9.3"
 mockk = "1.14.6"
 junitJupiterApi = "6.0.0"
 junitKtx = "1.3.0"
@@ -27,17 +49,30 @@ constraintlayout = "2.2.1"
 robolectricVersion = "4.16"
 roomRuntimeVersion = "2.8.1"
 runner = "1.7.0"
-room = "2.8.1"
-mockkVersion = "1.14.3"
-mockkAgentJvm = "1.14.3" # Єдина версія для всіх бібліотек Room
+room = "2.8.2"
+mockkVersion = "1.14.6"
+mockkAgentJvm = "1.14.6"
+junitVersion = "1.3.0"
+runtime = "1.10.0-alpha05"
+ui = "1.10.0-alpha05"
+runtimeAnnotation = "1.9.3"
+firebaseCrashlyticsKtx = "20.0.3"
+material3 = "1.4.0"
+coilKtCoil = "2.7.0"
+coilKtCoilGif = "2.7.0"
+coilKtCoilSvg = "2.7.0"
+coilKtCoilCompose = "2.7.0" # Єдина версія для всіх бібліотек Room
 
 [libraries]
 # AndroidX
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-espresso-core-v361 = { module = "androidx.test.espresso:espresso-core", version.ref = "espressoCoreVersion" }
 androidx-leanback = { group = "androidx.leanback", name = "leanback", version.ref = "leanback" }
 
 # UI/Media
+androidx-material = { module = "androidx.compose.material:material", version.ref = "materialVersion" }
+androidx-material3-v150alpha06 = { module = "androidx.compose.material3:material3", version.ref = "material3Version" }
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 androidx-room-common = { group = "androidx.room", name = "room-common", version.ref = "room" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
@@ -45,6 +80,28 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 
 androidx-rules = { module = "androidx.test:rules", version.ref = "runner" }
 androidx-runner = { module = "androidx.test:runner", version.ref = "runner" }
+coil = { module = "io.coil-kt.coil3:coil", version.ref = "coilCompose" }
+coil-bom = { module = "io.coil-kt.coil3:coil-bom", version.ref = "coil" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCompose" }
+coil-compose-v300 = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilComposeVersion" }
+coil-core = { module = "io.coil-kt.coil3:coil-core", version.ref = "coil" }
+coil-decode = { module = "io.coil-kt:coil-decode", version.ref = "coilDecode" }
+coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coil" }
+coil-gif-v300alpha02 = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coilGifVersion" }
+coil-kt-coil-gif = { module = "io.coil-kt:coil-gif", version.ref = "coilGif" }
+coil-kt-coil-svg = { module = "io.coil-kt:coil-svg", version.ref = "coilSvgVersion" }
+coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
+coil-svg-v330 = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coilSvg" }
+coil-v300 = { module = "io.coil-kt.coil3:coil", version.ref = "coil" }
+coil-v300rc01 = { module = "io.coil-kt.coil3:coil", version.ref = "coilVersion" }
+coil-video = { module = "io.coil-kt:coil-video", version.ref = "coilVideo" }
+coil-vxyz = { module = "io.coil-kt:coil", version.ref = "coilKtCoilVersion" }
+coil3 = { module = "io.coil-kt:coil3", version.ref = "coil3" }
+coil3-compose = { module = "io.coil-kt:coil3-compose", version.ref = "coil3Compose" }
+coil3-decode = { module = "io.coil-kt:coil3-decode", version.ref = "coil3" }
+coil3-gif = { module = "io.coil-kt:coil3-gif", version.ref = "coil3Gif" }
+coil3-svg = { module = "io.coil-kt:coil3-svg", version.ref = "coil3Svg" }
+coil3-video = { module = "io.coil-kt:coil3-video", version.ref = "coil3Video" }
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
 exoplayer-core = { group = "com.google.android.exoplayer", name = "exoplayer-core", version.ref = "exoplayer" }
 exoplayer-hls = { group = "com.google.android.exoplayer", name = "exoplayer-hls", version.ref = "exoplayer" }
@@ -57,10 +114,13 @@ firebase-config-ktx = { group = "com.google.firebase", name = "firebase-config-k
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
 firebase-crashlytics-ndk = { group = "com.google.firebase", name = "firebase-crashlytics-ndk" }
 google-firebase-config-ktx = { group = "com.google.firebase", name = "firebase-config-ktx", version.ref = "firebaseConfigKtx" }
+insert-koin-koin-android = { module = "io.insert-koin:koin-android", version.ref = "koinAndroidVersion" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 # androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 # androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+koin-android = { module = "org.koin:koin-android", version.ref = "koinAndroid" }
+koin-core = { module = "io.insert-koin:koin-core", version.ref = "koinCore" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesTest" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
@@ -75,6 +135,16 @@ androidx-constraintlayout = { group = "androidx.constraintlayout", name = "const
 robolectric-v4122 = { module = "org.robolectric:robolectric", version.ref = "robolectricVersion" }
 mockk-mockk = { group = "io.mockk", name = "mockk", version.ref = "mockkVersion" }
 mockk-agent-jvm = { group = "io.mockk", name = "mockk-agent-jvm", version.ref = "mockkAgentJvm" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
+androidx-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
+androidx-runtime-annotation = { group = "androidx.compose.runtime", name = "runtime-annotation", version.ref = "runtimeAnnotation" }
+firebase-crashlytics-ktx = { group = "com.google.firebase", name = "firebase-crashlytics-ktx", version.ref = "firebaseCrashlyticsKtx" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+coil-kt-coil = { group = "io.coil-kt", name = "coil", version.ref = "coilKtCoil" }
+io-coil-kt-coil-gif = { group = "io.coil-kt", name = "coil-gif", version.ref = "coilKtCoilGif" }
+io-coil-kt-coil-svg = { group = "io.coil-kt", name = "coil-svg", version.ref = "coilKtCoilSvg" }
+coil-kt-coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coilKtCoilCompose" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

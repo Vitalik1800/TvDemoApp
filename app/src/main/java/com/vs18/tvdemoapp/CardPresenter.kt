@@ -5,6 +5,7 @@ import android.view.*
 import androidx.core.content.*
 import androidx.leanback.widget.*
 import com.bumptech.glide.*
+import com.vs18.tvdemoapp.core.model.Movie
 import kotlin.properties.*
 
 class CardPresenter : Presenter() {

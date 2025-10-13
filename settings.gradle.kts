@@ -25,3 +25,6 @@ dependencyResolutionManagement {
 rootProject.name = "TvDemoApp"
 include(":app")
 
+include(":core")
+include(":player")
+include(":ui")

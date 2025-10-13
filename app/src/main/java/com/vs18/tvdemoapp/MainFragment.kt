@@ -1,7 +1,8 @@
 package com.vs18.tvdemoapp
 
+import com.vs18.tvdemoapp.core.model.*
 import android.content.*
-import android.graphics.*
+import android.graphics.Color
 import android.graphics.drawable.*
 import android.os.*
 import android.util.*
@@ -18,8 +19,10 @@ import com.bumptech.glide.request.transition.*
 import com.google.firebase.*
 import com.google.firebase.crashlytics.*
 import com.google.firebase.remoteconfig.*
+import com.vs18.tvdemoapp.core.repository.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.catch
+import org.koin.android.ext.android.inject
 import java.util.*
 
 @Suppress("DEPRECATION")
@@ -31,9 +34,7 @@ class MainFragment : BrowseSupportFragment() {
     private lateinit var metrics: DisplayMetrics
     private var backgroundTimer: Timer? = null
     private var backgroundUri: String? = null
-    private val repository by lazy {
-        MovieRepository((requireActivity().application as TvDemoApp).database.movieDao(), requireContext())
-    }
+    private val repository: MovieRepository by inject()
     private val scope = CoroutineScope(Dispatchers.Main + Job())
     private lateinit var adapter: ArrayObjectAdapter
     private var staticRowsLoaded = false
