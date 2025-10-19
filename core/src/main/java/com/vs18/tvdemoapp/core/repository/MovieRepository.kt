@@ -1,14 +1,13 @@
 package com.vs18.tvdemoapp.core.repository
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.util.Log
-import androidx.annotation.RequiresPermission
-import com.vs18.tvdemoapp.core.db.*
-import com.vs18.tvdemoapp.core.model.*
+//import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.vs18.tvdemoapp.core.db.MovieDao
+import com.vs18.tvdemoapp.core.model.Movie
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
@@ -17,13 +16,21 @@ class MovieRepository(
     private val context: Context
 ) {
 
+    @SuppressLint("MissingPermission")
+    private fun isNetworkAvailable(): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
     private fun getOfflineMovies(): List<Movie> = listOf(
         Movie(
             id = 1001,
             title = "Offline Movie 1: The Adventure",
             description = "A placeholder adventure movie for offline mode",
-            backgroundImageUrl = "",
-            cardImageUrl = "",
+            backgroundImageUrl = "android.resource://com.vs18.tvdemoapp/drawable/offline_movie_1",
+            cardImageUrl = "android.resource://com.vs18.tvdemoapp/drawable/offline_movie_1",
             videoUrl = "",
             studio = "Local Studio",
             subtitleUrl = ""
@@ -32,23 +39,14 @@ class MovieRepository(
             id = 1002,
             title = "Offline Movie 2: The Mystery",
             description = "A placeholder mystery movie for offline mode",
-            backgroundImageUrl = "",
-            cardImageUrl = "",
+            backgroundImageUrl = "android.resource://com.vs18.tvdemoapp/drawable/offline_movie_2",
+            cardImageUrl = "android.resource://com.vs18.tvdemoapp/drawable/offline_movie_2",
             videoUrl = "",
             studio = "Local Studio",
             subtitleUrl = ""
         )
     )
 
-    @RequiresPermission(Manifest.permission.ACCESS_NETWORK_STATE)
-    private fun isNetworkAvailable(): Boolean {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val network = connectivityManager.activeNetwork ?: return false
-        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
-        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-    }
-
-    @SuppressLint("MissingPermission")
     fun getMoviesFromNetwork(): Flow<List<Movie>> = flow {
         if (!isNetworkAvailable()) {
             val offlineMovies = getOfflineMovies()
@@ -100,24 +98,26 @@ class MovieRepository(
                 studio = "Blender",
                 subtitleUrl = "https://raw.githubusercontent.com/Vitalik1800/SubtitlesVS18/refs/heads/main/tears_of_steel.vvt"
             )
+            // ... інші онлайн-фільми ...
         )
         Log.d("MovieRepository", "Network request successful: $movies")
         movieDao.insertAll(movies)
         emit(movies)
     }.catch { e ->
         Log.e("MovieRepository", "Network request failed: ${e.message}", e)
+       // FirebaseCrashlytics.getInstance().recordException(e)
         val localMovies = withContext(Dispatchers.IO) {
             movieDao.getAll().firstOrNull() ?: getOfflineMovies()
         }
-        Log.d("MovieRepository", "Returning local movies: $localMovies")
+        Log.d("MovieRepository", "Returning local or offline movies: $localMovies")
         emit(localMovies)
     }.flowOn(Dispatchers.IO)
 
     val movieState: StateFlow<List<Movie>> = movieDao.getAll()
         .stateIn(
             scope = CoroutineScope(Dispatchers.IO),
-            started = SharingStarted.Companion.WhileSubscribed(5000),
-            initialValue = emptyList()
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = getOfflineMovies()
         )
 
     private val _movieSelectionEvents = MutableSharedFlow<Movie>(replay = 0)

@@ -14,6 +14,8 @@ import com.vs18.tvdemoapp.core.model.*
 @Composable
 fun VideoPlayer(
     movie: Movie?,
+    isOfflineMode: Boolean,
+    isNetworkAvailable: () -> Boolean,
     onError: (String) -> Unit
 ) {
     val context = LocalContext.current
@@ -27,15 +29,38 @@ fun VideoPlayer(
         return
     }
 
-    val player = SimpleExoPlayer.Builder(context).build()
-    val playerView = PlayerView(context).apply {
-        useController = true
-        setOnKeyListener { _, keyCode, event ->
-            if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) {
-                player.playWhenReady = !player.playWhenReady
-                true
-            } else {
-                false
+    if (isOfflineMode || !isNetworkAvailable()) {
+        LaunchedEffect(Unit) {
+            FirebaseCrashlytics.getInstance().log("Attempted to play video offline: ${movie.title}")
+            onError("Video playback is unavailable in offline mode.")
+        }
+        return
+    }
+
+    val player by remember { mutableStateOf(SimpleExoPlayer.Builder(context).build()) }
+    val playerView = remember {
+        PlayerView(context).apply {
+            useController = true
+            setOnKeyListener { _, keyCode, event ->
+                if (event.action == KeyEvent.ACTION_DOWN) {
+                    when (keyCode) {
+                        KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
+                            player.playWhenReady = !player.playWhenReady
+                            true
+                        }
+                        KeyEvent.KEYCODE_DPAD_LEFT -> {
+                            player.seekTo(player.currentPosition - 10000)
+                            true
+                        }
+                        KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                            player.seekTo(player.currentPosition + 10000)
+                            true
+                        }
+                        else -> false
+                    }
+                } else {
+                    false
+                }
             }
         }
     }

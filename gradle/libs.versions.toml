@@ -1,6 +1,6 @@
 [versions]
 activityCompose = "1.11.0"
-agp = "8.12.3"
+agp = "8.13.0"
 coil = "3.3.0"
 coil3 = "3.0.0"
 coil3Compose = "3.0.0"
@@ -17,6 +17,13 @@ coilSvg = "3.3.0"
 coilSvgVersion = "3.0.0"
 coilVersion = "3.3.0"
 coilVideo = "3.0.0"
+googleApiServicesAndroidpublisher = "v3-rev20230801-2.0.0"
+googleGoogleApiServicesAndroidpublisher = "v3-rev20250904-2.0.0"
+googleHttpClient = "2.0.2"
+googleHttpClientJackson2 = "2.0.2"
+googleHttpClientVersion = "1.43.3"
+googleOauthClient = "1.39.0"
+googleOauthClientVersion = "1.34.1"
 koinAndroid = "3.4.3"
 koinAndroidVersion = "4.1.1"
 koinCore = "4.1.1"
@@ -61,7 +68,11 @@ material3 = "1.4.0"
 coilKtCoil = "2.7.0"
 coilKtCoilGif = "2.7.0"
 coilKtCoilSvg = "2.7.0"
-coilKtCoilCompose = "2.7.0" # Єдина версія для всіх бібліотек Room
+coilKtCoilCompose = "2.7.0"
+googleApiServicesAndroidpublisherVersion = "v3-rev20250602-2.0.0"
+googleGoogleHttpClient = "1.47.0"
+coreKtxVersion = "1.7.0"
+espressoIdlingResource = "3.7.0" # Єдина версія для всіх бібліотек Room
 
 [libraries]
 # AndroidX
@@ -108,12 +119,19 @@ exoplayer-hls = { group = "com.google.android.exoplayer", name = "exoplayer-hls"
 exoplayer-ui = { group = "com.google.android.exoplayer", name = "exoplayer-ui", version.ref = "exoplayer" }
 
 # Firebase (версії тягне BoM)
-firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }
-firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
-firebase-config-ktx = { group = "com.google.firebase", name = "firebase-config-ktx" }
-firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
-firebase-crashlytics-ndk = { group = "com.google.firebase", name = "firebase-crashlytics-ndk" }
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version = "34.4.0" }
+firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics", version = "23.0.0" }
+firebase-config-ktx = { group = "com.google.firebase", name = "firebase-config-ktx", version = "22.1.2" }
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics", version = "20.0.3" }
+firebase-crashlytics-ndk = { group = "com.google.firebase", name = "firebase-crashlytics-ndk", version = "20.0.3" }
+google-api-services-androidpublisher = { module = "com.google.apis:google-api-services-androidpublisher", version.ref = "googleApiServicesAndroidpublisher" }
+google-api-services-androidpublisher-vv3rev20250904200 = { module = "com.google.apis:google-api-services-androidpublisher", version.ref = "googleGoogleApiServicesAndroidpublisher" }
 google-firebase-config-ktx = { group = "com.google.firebase", name = "firebase-config-ktx", version.ref = "firebaseConfigKtx" }
+google-http-client-jackson2 = { module = "com.google.http-client:google-http-client-jackson2", version.ref = "googleHttpClientJackson2" }
+google-http-client-v1433 = { module = "com.google.http-client:google-http-client", version.ref = "googleHttpClientVersion" }
+google-oauth-client = { module = "com.google.oauth-client:google-oauth-client", version.ref = "googleOauthClient" }
+google-http-client = { module = "com.google.http-client:google-http-client", version.ref = "googleHttpClient" }
+google-oauth-client-v1341 = { module = "com.google.oauth-client:google-oauth-client", version.ref = "googleOauthClientVersion" }
 insert-koin-koin-android = { module = "io.insert-koin:koin-android", version.ref = "koinAndroidVersion" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 # androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -145,6 +163,10 @@ coil-kt-coil = { group = "io.coil-kt", name = "coil", version.ref = "coilKtCoil"
 io-coil-kt-coil-gif = { group = "io.coil-kt", name = "coil-gif", version.ref = "coilKtCoilGif" }
 io-coil-kt-coil-svg = { group = "io.coil-kt", name = "coil-svg", version.ref = "coilKtCoilSvg" }
 coil-kt-coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coilKtCoilCompose" }
+apis-google-api-services-androidpublisher = { group = "com.google.apis", name = "google-api-services-androidpublisher", version.ref = "googleApiServicesAndroidpublisherVersion" }
+http-client-google-http-client = { group = "com.google.http-client", name = "google-http-client", version.ref = "googleGoogleHttpClient" }
+core-ktx = { group = "androidx.test", name = "core-ktx", version.ref = "coreKtxVersion" }
+androidx-espresso-idling-resource = { group = "androidx.test.espresso", name = "espresso-idling-resource", version.ref = "espressoIdlingResource" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

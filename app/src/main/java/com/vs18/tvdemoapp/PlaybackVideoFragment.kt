@@ -1,24 +1,11 @@
 package com.vs18.tvdemoapp
 
-import android.annotation.SuppressLint
-import android.content.Context
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.os.*
 import android.view.*
-import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.platform.ComposeView
-import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
-import com.google.android.exoplayer2.*
-import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
-import com.google.android.exoplayer2.ui.*
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
-import com.google.android.exoplayer2.util.*
-import com.google.android.material.theme.overlay.MaterialThemeOverlay
 import com.google.firebase.crashlytics.*
 import com.vs18.tvdemoapp.core.model.*
 import com.vs18.tvdemoapp.ui.screens.VideoScreen
@@ -26,17 +13,13 @@ import com.vs18.tvdemoapp.ui.screens.VideoScreen
 @Suppress("DEPRECATION")
 class PlaybackVideoFragment : Fragment() {
 
-    var movie: Movie? = null
-    var isOfflineMode: Boolean = false
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        movie = activity?.intent?.getParcelableExtra(DetailsActivity.MOVIE)
-        isOfflineMode = activity?.intent?.getBooleanExtra(DetailsActivity.IS_OFFLINE_MODE, false) ?: false
-
+        val movie = arguments?.getParcelable<Movie>(DetailsActivity.MOVIE)
         if (movie == null) {
             FirebaseCrashlytics.getInstance().log("No movie data in PlaybackVideoFragment")
+        } else {
+            FirebaseCrashlytics.getInstance().log("Playing video: ${movie.title}")
         }
     }
 
@@ -45,6 +28,9 @@ class PlaybackVideoFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        val movie = arguments?.getParcelable<Movie>(DetailsActivity.MOVIE)
+        val isOfflineMode = arguments?.getBoolean(DetailsActivity.IS_OFFLINE_MODE, false) ?: false
+
         return ComposeView(requireContext()).apply {
             setContent {
                 MaterialTheme {
@@ -54,6 +40,17 @@ class PlaybackVideoFragment : Fragment() {
                             isOfflineMode = isOfflineMode
                         )
                     }
+                }
+            }
+        }
+    }
+
+    companion object {
+        fun newInstance(movie: Movie?, isOfflineMode: Boolean): PlaybackVideoFragment {
+            return PlaybackVideoFragment().apply {
+                arguments = Bundle().apply {
+                    putParcelable(DetailsActivity.MOVIE, movie)
+                    putBoolean(DetailsActivity.IS_OFFLINE_MODE, isOfflineMode)
                 }
             }
         }

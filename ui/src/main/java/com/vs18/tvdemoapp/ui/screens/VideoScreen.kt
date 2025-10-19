@@ -6,6 +6,7 @@ import android.net.*
 import android.widget.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.*
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.vs18.tvdemoapp.core.model.*
 import com.vs18.tvdemoapp.player.*
 
@@ -13,15 +14,28 @@ import com.vs18.tvdemoapp.player.*
 fun VideoScreen(movie: Movie?, isOfflineMode: Boolean) {
     val context = LocalContext.current
     val movieState by rememberUpdatedState(movie)
-    var errorMessage by remember { mutableStateOf<String>("") }
+    var errorMessage by remember { mutableStateOf("") }
+
+    LaunchedEffect(movieState, isOfflineMode) {
+        if (movieState == null || movieState!!.videoUrl.isNullOrEmpty()) {
+            FirebaseCrashlytics.getInstance().log("No movie data or video URL in VideoScreen")
+            errorMessage = "Error: No movie data"
+        } else if (isOfflineMode || !context.isNetworkAvailable()) {
+            FirebaseCrashlytics.getInstance().log("Attempted to play video offline: ${movieState!!.title}")
+            errorMessage = "Video playback is unavailable in offline mode."
+        }
+    }
 
     VideoPlayer(
-        movie = movie,
+        movie = movieState,
+        isOfflineMode = isOfflineMode,
+        isNetworkAvailable = { context.isNetworkAvailable()},
         onError = { msg -> errorMessage = msg }
     )
 
     errorMessage?.let {message ->
         LaunchedEffect(message) {
+            FirebaseCrashlytics.getInstance().log("VideoScreen error: $message")
             Toast.makeText(context, message, Toast.LENGTH_LONG).show()
             errorMessage = ""
         }

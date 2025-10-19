@@ -39,14 +39,40 @@ android {
         }
     }
 
-    signingConfigs {
-        create("release") {
-            storeFile = file("keystore.jks")
-            storePassword = System.getenv("SIGNING_STORE_PASSWORD")
-            keyAlias = System.getenv("SIGNING_KEY_ALIAS")
-            keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+    bundle {
+        language {
+            enableSplit = false
         }
     }
+
+    signingConfigs {
+        val releaseStorePassword = System.getenv("SIGNING_STORE_PASSWORD")
+            ?: project.findProperty("SIGNING_STORE_PASSWORD")?.toString()
+        val releaseKeyAlias = System.getenv("SIGNING_KEY_ALIAS")
+            ?: project.findProperty("SIGNING_KEY_ALIAS")?.toString()
+        val releaseKeyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+            ?: project.findProperty("SIGNING_KEY_PASSWORD")?.toString()
+
+        if (releaseStorePassword == null || releaseKeyAlias == null || releaseKeyPassword == null) {
+            println("⚠️ WARNING: Missing signing credentials. Using debug keystore instead.")
+        }
+
+        create("release") {
+            if (releaseStorePassword != null && releaseKeyAlias != null && releaseKeyPassword != null) {
+                storeFile = file(project.findProperty("SIGNING_STORE_FILE")?.toString() ?: "keystore.jks")
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            } else {
+                // fallback to debug keystore if secrets missing
+                storeFile = file("${System.getProperty("user.home")}/.android/debug.keystore")
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
+    }
+
 
     buildTypes {
         release {
@@ -56,6 +82,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        debug {
+            isMinifyEnabled = false
         }
     }
 
@@ -67,79 +96,125 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
     kotlinOptions {
         jvmTarget = "17"
     }
 
     packaging {
         resources {
-            excludes += "META-INF/LICENSE.md"
-            excludes += "META-INF/LICENSE-notice.md"
+            excludes += listOf(
+                "META-INF/DEPENDENCIES",
+                "META-INF/LICENSE",
+                "META-INF/LICENSE.txt",
+                "META-INF/license.txt",
+                "META-INF/NOTICE",
+                "META-INF/NOTICE.txt",
+                "META-INF/notice.txt",
+                "META-INF/INDEX.LIST"
+            )
+        }
+    }
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
+}
+
+/**
+ * === Custom Tasks ===
+ * Автоматична збірка і підпис AAB для free/pro flavor
+ */
+tasks.register("buildAndSignAABFree") {
+    dependsOn("bundleFreeRelease")
+    doLast {
+        println("✅ Building AAB for Free flavor...")
+        project.copy {
+            from("build/outputs/bundle/freeRelease/app-free-release.aab")
+            into("build/outputs/bundle/custom/free")
+        }
+    }
+}
+
+tasks.register("buildAndSignAABPro") {
+    dependsOn("bundleProRelease")
+    doLast {
+        println("✅ Building AAB for Pro flavor...")
+        project.copy {
+            from("build/outputs/bundle/proRelease/app-pro-release.aab")
+            into("build/outputs/bundle/custom/pro")
         }
     }
 }
 
 dependencies {
-    implementation(libs.exoplayer.ui)
-    implementation(libs.exoplayer.core)
+    // Core
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
+    implementation(libs.androidx.activity)
+    implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.material3)
     implementation(libs.androidx.runtime)
     implementation(libs.androidx.ui)
-    implementation(libs.insert.koin.koin.android) // або новішу версію
-    implementation(libs.koin.core)
+
+    // Modules
     implementation(project(":core"))
     implementation(project(":player"))
     implementation(project(":ui"))
-    implementation(libs.androidx.material3)
-    implementation(libs.coil.kt.coil)
-    implementation(libs.io.coil.kt.coil.gif)
-    implementation(libs.io.coil.kt.coil.svg)
-    testImplementation(libs.mockk.mockk)
-    testImplementation(libs.mockk.agent.jvm)
-    // AndroidX
-    implementation(libs.androidx.core.ktx)
+
+    // Media / TV
+    implementation(libs.exoplayer.core)
+    implementation(libs.exoplayer.ui)
+    implementation(libs.exoplayer.hls)
     implementation(libs.androidx.leanback)
 
-    // UI/Media
-    implementation(libs.glide)
-    implementation(libs.exoplayer.hls)
+    // Dependency Injection
+    implementation(libs.insert.koin.koin.android)
+    implementation(libs.koin.core)
 
-    // Firebase (через BoM)
+    // Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.config.ktx)
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.crashlytics.ndk)
-    implementation(libs.google.firebase.config.ktx)
+
+    // Image Loading
+    implementation(libs.coil.kt.coil)
+    implementation(libs.io.coil.kt.coil.gif)
+    implementation(libs.io.coil.kt.coil.svg)
+    implementation(libs.glide)
+
+    // Google Play API
+    implementation(libs.apis.google.api.services.androidpublisher)
+    implementation(libs.google.api.services.androidpublisher.vv3rev20250904200)
+    implementation(libs.http.client.google.http.client)
+    implementation(libs.core.ktx)
     implementation(libs.androidx.junit.ktx)
-    implementation(libs.androidx.fragment.testing)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    implementation(libs.androidx.activity)
-    implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.espresso.idling.resource)
+
+    // Testing
     testImplementation(libs.mockk)
+    testImplementation(libs.mockk.agent.jvm)
+    testImplementation(libs.junit)
     testImplementation(libs.junit.jupiter.api)
+    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.robolectric)
-    androidTestImplementation(libs.junit.jupiter.api)
+    testImplementation(libs.robolectric.v4122)
+    testImplementation(kotlin("test"))
     androidTestImplementation(libs.androidx.espresso.core.v361)
     androidTestImplementation(libs.androidx.runner)
-    //noinspection GradleDependency
     androidTestImplementation(libs.androidx.rules)
-    testImplementation(libs.robolectric.v4122)
-    testRuntimeOnly(libs.junit.jupiter.api)
-    testImplementation(libs.junit)
-    testImplementation(kotlin("test"))
-    testImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.androidx.fragment.testing)
+    androidTestImplementation(libs.androidx.junit.ktx)
 }
 
 afterEvaluate {
+    // Вимикаємо GoogleServices для pro flavor (немає json-ключа)
     tasks.matching { it.name.contains("processPro") && it.name.contains("GoogleServices") }
         .configureEach { enabled = false }
-}
 
-afterEvaluate {
     tasks.matching { it.name.contains("uploadCrashlyticsMappingFileProRelease") }
         .configureEach { enabled = false }
 

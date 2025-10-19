@@ -19,9 +19,11 @@ class TvDemoApp : Application(){
     @SuppressLint("NewApi")
     override fun onCreate() {
         super.onCreate()
-        startKoin {
-            androidContext(this@TvDemoApp)
-            modules(coreModule)
+        if (GlobalContext.getOrNull() == null) {
+            startKoin {
+                androidContext(this@TvDemoApp)
+                modules(coreModule)
+            }
         }
 
         imageLoader = ImageLoader.Builder(this)
@@ -34,5 +36,6 @@ class TvDemoApp : Application(){
             .logger(DebugLogger())
             .build()
     }
+
 
 }

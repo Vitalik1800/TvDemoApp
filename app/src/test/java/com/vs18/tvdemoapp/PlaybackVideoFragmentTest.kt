@@ -1,8 +1,10 @@
 package com.vs18.tvdemoapp
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Build
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.FragmentActivity
@@ -10,29 +12,31 @@ import androidx.test.core.app.ApplicationProvider
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.vs18.tvdemoapp.core.model.Movie
 import io.mockk.*
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import kotlin.test.assertEquals
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
 class PlaybackVideoFragmentTest {
 
     private lateinit var fragment: PlaybackVideoFragment
-    private val mockActivity = mockk<FragmentActivity>()
-    private val mockIntent = mockk<android.content.Intent>()
+    private lateinit var activity: FragmentActivity
+    private var mockContext = ApplicationProvider.getApplicationContext<Context>()
     private val mockCrashlytics = mockk<FirebaseCrashlytics>(relaxed = true)
 
-    private val testMovie = Movie(
+    private val movie = Movie(
         id = 1,
         title = "Test Movie",
         videoUrl = "https://example.com/video.mp4",
-        subtitleUrl = "https://example.com/subs.vtt"
+        subtitleUrl = "https://example.com/subtitles.vtt",
+        cardImageUrl = "https://example.com/image.jpg"
     )
 
     @Before
@@ -40,54 +44,55 @@ class PlaybackVideoFragmentTest {
         mockkStatic(FirebaseCrashlytics::class)
         every { FirebaseCrashlytics.getInstance() } returns mockCrashlytics
 
-        fragment = spyk(PlaybackVideoFragment(), recordPrivateCalls = true)
-        every { mockActivity.intent } returns mockIntent
-        every { mockIntent.getParcelableExtra<Movie>(DetailsActivity.MOVIE) } returns testMovie
-        every { mockIntent.getBooleanExtra(DetailsActivity.IS_OFFLINE_MODE, any()) } returns false
-        every { fragment.activity } returns mockActivity
-        every { fragment.requireContext() } returns ApplicationProvider.getApplicationContext()
+        val connectivityManager = mockk<ConnectivityManager>(relaxed = true)
+        val networkCapabilities = mockk<NetworkCapabilities>(relaxed = true)
+        every { networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) } returns true
+        every { connectivityManager.activeNetwork } returns mockk()
+        every { connectivityManager.getNetworkCapabilities(any()) } returns networkCapabilities
+
+        mockContext = mockk(relaxed = true)
+        every { mockContext.getSystemService(Context.CONNECTIVITY_SERVICE) } returns connectivityManager
+
+        val controller = Robolectric.buildActivity(FragmentActivity::class.java).setup()
+        activity = controller.get()
+
+        // ⚡ Без spyk — звичайний інстанс
+        fragment = PlaybackVideoFragment.newInstance(movie, false)
+
+        activity.supportFragmentManager.beginTransaction()
+            .add(android.R.id.content, fragment)
+            .commitNow()
+    }
+
+    @After
+    fun tearDown() {
+        unmockkAll()
     }
 
     @Test
-    fun onCreate_initializesMovieAndOfflineMode() {
-        // 🔹 Уникаємо реального виклику super.onCreate()
-        every { fragment.activity } returns mockActivity
-        every { mockActivity.intent } returns mockIntent
-        every { mockIntent.getParcelableExtra<Movie>(DetailsActivity.MOVIE) } returns testMovie
-        every { mockIntent.getBooleanExtra(DetailsActivity.IS_OFFLINE_MODE, any()) } returns true
-
-        // Викликаємо логіку вручну через reflection, щоб не чіпати Android internals
-        fragment.apply {
-            movie = mockActivity.intent.getParcelableExtra(DetailsActivity.MOVIE)
-            isOfflineMode = mockActivity.intent.getBooleanExtra(DetailsActivity.IS_OFFLINE_MODE, false)
-        }
-
-        val fieldMovie = fragment.javaClass.getDeclaredField("movie").apply { isAccessible = true }.get(fragment)
-        val fieldOffline = fragment.javaClass.getDeclaredField("isOfflineMode").apply { isAccessible = true }.get(fragment)
-
-        assertEquals(testMovie, fieldMovie)
-        assertEquals(true, fieldOffline)
+    fun playbackVideoFragment_playsVideo_whenValidMovieAndOnline() {
+        fragment.onCreateView(LayoutInflater.from(activity), null, null)
+        verify { mockCrashlytics.log("Playing video: Test Movie") }
     }
 
-
     @Test
-    fun onCreateView_returnsComposeView() {
-        val inflater = mockk<LayoutInflater>(relaxed = true)
-        val container = mockk<ViewGroup>(relaxed = true)
+    fun playbackVideoFragment_handlesMissingMovie() {
+        val fragmentWithoutMovie = PlaybackVideoFragment.newInstance(null, false)
 
-        val view = fragment.onCreateView(inflater, container, null)
+        activity.supportFragmentManager.beginTransaction()
+            .replace(android.R.id.content, fragmentWithoutMovie)
+            .commitNow()
 
-        assertNotNull(view)
-        assertTrue(view is ComposeView)
+        verify { mockCrashlytics.log("No movie data in PlaybackVideoFragment") }
     }
 
     @Test
     fun onCreateView_setsUpVideoScreenContent() {
-        val inflater = mockk<LayoutInflater>(relaxed = true)
+        val inflater = LayoutInflater.from(activity)
         val container = mockk<ViewGroup>(relaxed = true)
-        val composeView = fragment.onCreateView(inflater, container, null) as ComposeView
 
-        assertNotNull(composeView)
-        assertTrue(composeView is ComposeView)
+        val view = fragment.onCreateView(inflater, container, null)
+        assertNotNull(view)
+        assertTrue(view is ComposeView)
     }
 }

@@ -1,18 +1,17 @@
 package com.vs18.tvdemoapp
 
-import android.content.*
-import androidx.test.core.app.*
-import androidx.test.espresso.Espresso.*
+import android.content.Context
+import android.content.Intent
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.IdlingPolicies
 import androidx.test.espresso.IdlingRegistry
-import androidx.test.espresso.assertion.ViewAssertions.*
 import androidx.test.espresso.idling.CountingIdlingResource
-import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.rules.ActivityScenarioRule
-import androidx.test.ext.junit.runners.*
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.vs18.tvdemoapp.core.model.Movie
-import org.junit.*
-import org.junit.runner.*
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
 import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
