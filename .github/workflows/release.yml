@@ -19,7 +19,8 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           PLAY_CONSOLE_KEY: ${{ secrets.PLAY_CONSOLE_KEY }}
       - name: Upload AAB Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: app-release-aab
           path: app/build/outputs/bundle/custom/app-release.aab
+
