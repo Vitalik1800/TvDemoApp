@@ -8,6 +8,7 @@ import coil.decode.ImageDecoderDecoder
 import coil.decode.SvgDecoder
 import coil.util.DebugLogger
 import com.vs18.tvdemoapp.core.di.*
+import com.vs18.tvdemoapp.security.SecurePrefs
 import org.koin.core.context.*
 import org.koin.android.ext.koin.*
 
@@ -19,6 +20,7 @@ class TvDemoApp : Application(){
     @SuppressLint("NewApi")
     override fun onCreate() {
         super.onCreate()
+        SecurePrefs.init(this)
         if (GlobalContext.getOrNull() == null) {
             startKoin {
                 androidContext(this@TvDemoApp)

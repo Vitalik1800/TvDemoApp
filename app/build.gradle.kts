@@ -6,7 +6,7 @@ plugins {
     alias(libs.plugins.google.gms.google.services)
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.ksp)
-    id("org.jetbrains.kotlin.plugin.compose") version "2.2.20"
+    id("org.jetbrains.kotlin.plugin.compose") version "2.2.21"
 }
 
 android {
@@ -89,6 +89,7 @@ android {
     }
 
     buildFeatures {
+        buildConfig = true
         compose = true
     }
 
@@ -148,6 +149,9 @@ tasks.register("buildAndSignAABPro") {
 }
 
 dependencies {
+
+    implementation(libs.androidx.espresso.core.v361)
+    implementation(libs.androidx.security.crypto)
     // Core
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -193,6 +197,9 @@ dependencies {
     implementation(libs.core.ktx)
     implementation(libs.androidx.junit.ktx)
     implementation(libs.androidx.espresso.idling.resource)
+    implementation(libs.integrity)
+    implementation(libs.androidx.ui.test.junit4)
+    implementation(libs.androidx.uiautomator)
 
     // Testing
     testImplementation(libs.mockk)
@@ -208,6 +215,10 @@ dependencies {
     androidTestImplementation(libs.androidx.rules)
     androidTestImplementation(libs.androidx.fragment.testing)
     androidTestImplementation(libs.androidx.junit.ktx)
+    implementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4.v170beta02)
+    testImplementation("androidx.compose.ui:ui-test-junit4:1.9.4")
+    testImplementation(libs.robolectric.v4111)
 }
 
 afterEvaluate {

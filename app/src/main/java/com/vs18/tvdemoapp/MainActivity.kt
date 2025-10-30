@@ -9,6 +9,7 @@ import androidx.fragment.app.*
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.*
 import com.google.firebase.remoteconfig.*
+import com.vs18.tvdemoapp.security.*
 
 class MainActivity : FragmentActivity() {
 
@@ -21,23 +22,21 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        SecurePrefs.userToken = "user_12345"
+
         val crashButton = Button(this).apply {
             text = "Crash Test"
             setOnClickListener {
                 FirebaseCrashlytics.getInstance().log("Crash button pressed in MainActivity")
-
                 testError()
                 throw RuntimeException("Test Crash: triggered by Crash Button")
             }
         }
 
-        addContentView(
-            crashButton,
-            FrameLayout.LayoutParams(
+        addContentView(crashButton, FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.WRAP_CONTENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT
-            )
-        )
+            ).apply { setMargins(16, 16, 16, 16) })
 
         FirebaseCrashlytics.getInstance().isCrashlyticsCollectionEnabled = true
 
@@ -108,12 +107,11 @@ class MainActivity : FragmentActivity() {
             inflater: LayoutInflater, container: ViewGroup?,
             savedInstanceState: Bundle?
         ): View? {
-            val progressBar = ProgressBar(container?.context)
-            if (container is FrameLayout) {
-                val layoutParams = FrameLayout.LayoutParams(SPINNER_WIDTH, SPINNER_HEIGHT, Gravity.CENTER)
-                progressBar.layoutParams = layoutParams
+            return ProgressBar(container?.context).apply {
+                if (container is FrameLayout) {
+                    layoutParams = FrameLayout.LayoutParams(SPINNER_WIDTH, SPINNER_HEIGHT, Gravity.CENTER)
+                }
             }
-            return progressBar
         }
     }
 

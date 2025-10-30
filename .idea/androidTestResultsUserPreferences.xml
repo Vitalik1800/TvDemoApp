@@ -3,6 +3,19 @@
   <component name="AndroidTestResultsUserPreferences">
     <option name="androidTestResultsTableState">
       <map>
+        <entry key="-1687353371">
+          <value>
+            <AndroidTestResultsTableState>
+              <option name="preferredColumnWidths">
+                <map>
+                  <entry key="Duration" value="90" />
+                  <entry key="Tests" value="360" />
+                  <entry key="ZTE ZTE BLADE A520" value="120" />
+                </map>
+              </option>
+            </AndroidTestResultsTableState>
+          </value>
+        </entry>
         <entry key="-1107800916">
           <value>
             <AndroidTestResultsTableState>
@@ -10,7 +23,38 @@
                 <map>
                   <entry key="Asus ASUS_I003DD" value="120" />
                   <entry key="Duration" value="90" />
+                  <entry key="Samsung SM-A156E" value="120" />
                   <entry key="Tests" value="360" />
+                  <entry key="ZTE ZTE BLADE A520" value="120" />
+                </map>
+              </option>
+            </AndroidTestResultsTableState>
+          </value>
+        </entry>
+        <entry key="-938884538">
+          <value>
+            <AndroidTestResultsTableState>
+              <option name="preferredColumnWidths">
+                <map>
+                  <entry key="Asus ASUS_I003DD" value="120" />
+                  <entry key="Duration" value="90" />
+                  <entry key="Tests" value="360" />
+                  <entry key="ZTE ZTE BLADE A520" value="120" />
+                </map>
+              </option>
+            </AndroidTestResultsTableState>
+          </value>
+        </entry>
+        <entry key="1446232922">
+          <value>
+            <AndroidTestResultsTableState>
+              <option name="preferredColumnWidths">
+                <map>
+                  <entry key="Asus ASUS_I003DD" value="120" />
+                  <entry key="Duration" value="90" />
+                  <entry key="Samsung SM-A156E" value="120" />
+                  <entry key="Tests" value="360" />
+                  <entry key="ZTE ZTE BLADE A520" value="120" />
                 </map>
               </option>
             </AndroidTestResultsTableState>

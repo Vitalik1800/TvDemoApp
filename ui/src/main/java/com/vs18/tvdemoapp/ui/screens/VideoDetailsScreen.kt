@@ -1,26 +1,22 @@
 package com.vs18.tvdemoapp.ui.screens
 
-import android.widget.Toast
+import android.widget.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.shape.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import coil.ImageLoader
-import coil.request.*
-import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.vs18.tvdemoapp.core.model.Movie
-import com.vs18.tvdemoapp.core.model.MovieList
-import kotlinx.coroutines.launch
+import androidx.compose.ui.draw.*
+import androidx.compose.ui.layout.*
+import androidx.compose.ui.platform.*
+import androidx.compose.ui.text.style.*
+import androidx.compose.ui.unit.*
+import coil.*
 import coil.compose.*
+import com.google.firebase.crashlytics.*
+import com.vs18.tvdemoapp.core.model.*
 
 @Composable
 fun VideoDetailsScreen(
@@ -31,58 +27,51 @@ fun VideoDetailsScreen(
     onNavigateToMain: () -> Unit
 ) {
     val context = LocalContext.current
-    val crashlytics = FirebaseCrashlytics.getInstance()
-    val scope = rememberCoroutineScope()
+    val crashlytics = remember { FirebaseCrashlytics.getInstance() }
+    val scrollState = rememberScrollState()
+    val lazyRowState = rememberLazyListState()
+
+    val relatedMovies by remember {
+        derivedStateOf { MovieList.list.shuffled().take(10) }
+    }
 
     if (movie == null) {
-        crashlytics.log("❌ No movie data provided in VideoDetailsScreen")
-        Toast.makeText(context, "Error: No movie data", Toast.LENGTH_LONG).show()
-        onNavigateToMain()
+        LaunchedEffect(Unit) {
+            crashlytics.log("No movie data in VideoDetailsScreen")
+            Toast.makeText(context, "Error: No movie data", Toast.LENGTH_LONG).show()
+            onNavigateToMain()
+        }
         return
     }
 
-    crashlytics.log("🎬 Opened details for: ${movie.title}")
+    LaunchedEffect(movie.id) {
+        crashlytics.log("Opened details: ${movie.title}")
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colors.surface)
             .padding(16.dp)
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
     ) {
         val imageUrl = movie.backgroundImageUrl ?: movie.cardImageUrl
-        val painter = rememberAsyncImagePainter(
-            model = ImageRequest.Builder(context)
-                .data(imageUrl)
-                .crossfade(true)
-                .listener(
-                    onStart = {
-                        crashlytics.log("🟡 Coil: start loading image $imageUrl")
-                    },
-                    onSuccess = { _, result ->
-                        crashlytics.log("✅ Coil: image loaded successfully — ${result.dataSource}")
-                    },
-                    onError = { _, error ->
-                        crashlytics.recordException(
-                            Exception("❌ Coil failed to load image: $imageUrl", error.throwable)
-                        )
-                        Toast.makeText(context, "Image load error", Toast.LENGTH_SHORT).show()
-                    }
-                )
-                .build(),
-            imageLoader = imageLoader
-        )
 
-        val state = painter.state
-        when (state) {
-            is AsyncImagePainter.State.Loading -> {
-                Text("⏳ Loading image...", modifier = Modifier.padding(8.dp))
+        val painter = rememberAsyncImagePainter(
+            model = imageUrl,
+            imageLoader = imageLoader,
+            onState = { state ->
+                when (state) {
+                    is AsyncImagePainter.State.Loading -> crashlytics.log("Coil loading: $imageUrl")
+                    is AsyncImagePainter.State.Success -> crashlytics.log("Coil Success")
+                    is AsyncImagePainter.State.Error -> {
+                        crashlytics.recordException(state.result.throwable)
+                        Toast.makeText(context, "Image load error", Toast.LENGTH_LONG).show()
+                    }
+                    else -> Unit
+                }
             }
-            is AsyncImagePainter.State.Error -> {
-                Text("⚠️ Error loading image", modifier = Modifier.padding(8.dp))
-            }
-            else -> Unit
-        }
+        )
 
         Image(
             painter = painter,
@@ -99,7 +88,7 @@ fun VideoDetailsScreen(
 
         Text(movie.title ?: "Untitled", style = MaterialTheme.typography.h6)
         Text(
-            movie.description ?: "No description available.",
+            movie.description ?: "No description.",
             style = MaterialTheme.typography.body2,
             maxLines = 5,
             overflow = TextOverflow.Ellipsis,
@@ -112,15 +101,14 @@ fun VideoDetailsScreen(
             onClick = {
                 when {
                     isOfflineMode -> {
-                        crashlytics.log("📴 Offline playback attempt: ${movie.title}")
+                        crashlytics.log("Offline mode blocked: ${movie.title}")
                         Toast.makeText(context, "Offline mode", Toast.LENGTH_LONG).show()
                     }
                     movie.videoUrl.isNullOrEmpty() -> {
-                        crashlytics.log("⚠️ No video URL for: ${movie.title}")
+                        crashlytics.log("No video URL: ${movie.title}")
                         Toast.makeText(context, "No video URL", Toast.LENGTH_LONG).show()
-                    }
-                    else -> {
-                        crashlytics.log("▶️ Playing movie: ${movie.title}")
+                    } else -> {
+                        crashlytics.log("Playing: ${movie.title}")
                         onNavigateToPlayer(movie)
                     }
                 }
@@ -133,25 +121,38 @@ fun VideoDetailsScreen(
         Spacer(Modifier.height(24.dp))
 
         Text("Related Movies", style = MaterialTheme.typography.h6)
-        val relatedMovies = remember { MovieList.list.shuffled() }
 
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(relatedMovies) { related ->
-                RelatedMovieCard(related, imageLoader) {
-                    crashlytics.log("📺 Open related: ${related.title}")
-                    onNavigateToPlayer(related)
-                }
+        LazyRow(
+            state = lazyRowState,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(
+                items = relatedMovies,
+                key = { it.id }
+            ) { related ->
+                RelatedMovieCard(
+                    movie = related,
+                    imageLoader = imageLoader,
+                    onClick = {
+                        crashlytics.log("Related clicked: ${related.title}")
+                        onNavigateToPlayer(related)
+                    }
+                )
             }
         }
     }
 }
 
 @Composable
-fun RelatedMovieCard(movie: Movie, imageLoader: ImageLoader, onClick: () -> Unit) {
+fun RelatedMovieCard(
+    movie: Movie,
+    imageLoader: ImageLoader,
+    onClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .width(140.dp)
-            .clickable { onClick() }
+            .clickable(onClick = onClick)
     ) {
         val painter = rememberAsyncImagePainter(
             model = movie.backgroundImageUrl,
