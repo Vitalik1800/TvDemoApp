@@ -7,6 +7,7 @@ import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import coil.decode.SvgDecoder
 import coil.util.DebugLogger
+import com.vs18.ml.MLKitTranslationManager
 import com.vs18.tvdemoapp.core.di.*
 import com.vs18.tvdemoapp.security.SecurePrefs
 import org.koin.core.context.*
@@ -21,6 +22,7 @@ class TvDemoApp : Application(){
     override fun onCreate() {
         super.onCreate()
         SecurePrefs.init(this)
+        MLKitTranslationManager.init(this)
         if (GlobalContext.getOrNull() == null) {
             startKoin {
                 androidContext(this@TvDemoApp)

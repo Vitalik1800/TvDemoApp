@@ -149,7 +149,8 @@ tasks.register("buildAndSignAABPro") {
 }
 
 dependencies {
-
+    implementation(libs.extension.ima)
+    implementation(libs.translate)
     implementation(libs.androidx.espresso.core.v361)
     implementation(libs.androidx.security.crypto)
     // Core
@@ -200,6 +201,7 @@ dependencies {
     implementation(libs.integrity)
     implementation(libs.androidx.ui.test.junit4)
     implementation(libs.androidx.uiautomator)
+    implementation(project(":ml"))
 
     // Testing
     testImplementation(libs.mockk)

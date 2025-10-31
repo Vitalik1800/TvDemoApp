@@ -64,6 +64,7 @@ mockkAgentJvm = "1.14.6"
 junitVersion = "1.3.0"
 runtime = "1.10.0-beta01"
 securityCrypto = "1.1.0"
+translate = "17.0.3"
 ui = "1.10.0-beta01"
 runtimeAnnotation = "1.9.4"
 firebaseCrashlyticsKtx = "20.0.3"
@@ -124,6 +125,7 @@ coil3-decode = { module = "io.coil-kt:coil3-decode", version.ref = "coil3" }
 coil3-gif = { module = "io.coil-kt:coil3-gif", version.ref = "coil3Gif" }
 coil3-svg = { module = "io.coil-kt:coil3-svg", version.ref = "coil3Svg" }
 coil3-video = { module = "io.coil-kt:coil3-video", version.ref = "coil3Video" }
+extension-ima = { module = "com.google.android.exoplayer:extension-ima", version.ref = "exoplayer" }
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
 exoplayer-core = { group = "com.google.android.exoplayer", name = "exoplayer-core", version.ref = "exoplayer" }
 exoplayer-hls = { group = "com.google.android.exoplayer", name = "exoplayer-hls", version.ref = "exoplayer" }
@@ -183,6 +185,7 @@ runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = 
 integrity = { group = "com.google.android.play", name = "integrity", version.ref = "integrity" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4", version.ref = "uiTestJunit4" }
 androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
+translate = { module = "com.google.mlkit:translate", version.ref = "translate" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

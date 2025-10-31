@@ -17,31 +17,29 @@ fun VideoScreen(
 ) {
     val context = LocalContext.current
     val crashlytics = remember { FirebaseCrashlytics.getInstance() }
-
-    val currentMovie by rememberUpdatedState(movie)
     val networkAvailable by remember { derivedStateOf { context.isNetworkAvailable() } }
 
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(currentMovie, isOfflineMode, networkAvailable) {
+    LaunchedEffect(movie, isOfflineMode, networkAvailable) {
         when {
-            currentMovie == null || currentMovie!!.videoUrl.isNullOrEmpty() -> {
-                crashlytics.log("No movie or video URL")
+            movie == null || movie.videoUrl.isNullOrEmpty() -> {
                 errorMessage = "Error: No movie data"
             }
             isOfflineMode || !networkAvailable -> {
-                crashlytics.log("Offline playback blocked: ${currentMovie!!.title}")
                 errorMessage = "Video playback unavailable in offline mode."
             }
         }
     }
 
-    VideoPlayer(
-        movie = currentMovie,
-        isOfflineMode = isOfflineMode || !networkAvailable,
-        isNetworkAvailable = { networkAvailable },
-        onError = { msg -> errorMessage = msg}
-    )
+    if (errorMessage == null && movie != null) {
+        ImaAdsVideoPlayer(
+            movie = movie,
+            isOfflineMode = isOfflineMode,
+            isNetworkAvailable = { networkAvailable },
+            onError = { msg -> errorMessage = msg }
+        )
+    }
 
     errorMessage?.let { msg ->
         LaunchedEffect(msg) {

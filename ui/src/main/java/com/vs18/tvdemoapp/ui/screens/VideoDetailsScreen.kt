@@ -5,10 +5,13 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.*
-import androidx.compose.material.*
+import androidx.compose.material.Button
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.layout.*
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.text.style.*
@@ -17,6 +20,8 @@ import coil.*
 import coil.compose.*
 import com.google.firebase.crashlytics.*
 import com.vs18.tvdemoapp.core.model.*
+import com.vs18.ml.*
+import kotlinx.coroutines.*
 
 @Composable
 fun VideoDetailsScreen(
@@ -30,9 +35,39 @@ fun VideoDetailsScreen(
     val crashlytics = remember { FirebaseCrashlytics.getInstance() }
     val scrollState = rememberScrollState()
     val lazyRowState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
 
     val relatedMovies by remember {
         derivedStateOf { MovieList.list.shuffled().take(10) }
+    }
+
+    var translatedDescription by remember { mutableStateOf("Loading...") }
+    var isTranslating by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        MLKitTranslationManager.init(context)
+    }
+
+    LaunchedEffect(movie?.description) {
+        val original = movie?.description ?: return@LaunchedEffect
+        if (original.isBlank()) {
+            translatedDescription = "No description."
+            isTranslating = false
+            return@LaunchedEffect
+        }
+
+        scope.launch {
+            try {
+                isTranslating = true
+                val translated = MLKitTranslationManager.translate(original)
+                translatedDescription = translated
+            } catch (e: Exception) {
+                crashlytics.recordException(e)
+                translatedDescription = "Translation failed"
+            } finally {
+                isTranslating = false
+            }
+        }
     }
 
     if (movie == null) {
@@ -56,7 +91,6 @@ fun VideoDetailsScreen(
             .verticalScroll(scrollState)
     ) {
         val imageUrl = movie.backgroundImageUrl ?: movie.cardImageUrl
-
         val painter = rememberAsyncImagePainter(
             model = imageUrl,
             imageLoader = imageLoader,
@@ -87,13 +121,24 @@ fun VideoDetailsScreen(
         Spacer(Modifier.height(16.dp))
 
         Text(movie.title ?: "Untitled", style = MaterialTheme.typography.h6)
-        Text(
-            movie.description ?: "No description.",
-            style = MaterialTheme.typography.body2,
-            maxLines = 5,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
+
+        Spacer(Modifier.height(8.dp))
+        if (isTranslating) {
+            Text(
+                text = "Translating...",
+                style = MaterialTheme.typography.body2,
+                color = Color.Gray,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        } else {
+            Text(
+                text = translatedDescription,
+                style = MaterialTheme.typography.body2,
+                maxLines = 5,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        }
 
         Spacer(Modifier.height(8.dp))
 
@@ -107,7 +152,8 @@ fun VideoDetailsScreen(
                     movie.videoUrl.isNullOrEmpty() -> {
                         crashlytics.log("No video URL: ${movie.title}")
                         Toast.makeText(context, "No video URL", Toast.LENGTH_LONG).show()
-                    } else -> {
+                    }
+                    else -> {
                         crashlytics.log("Playing: ${movie.title}")
                         onNavigateToPlayer(movie)
                     }

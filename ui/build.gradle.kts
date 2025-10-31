@@ -48,6 +48,7 @@ dependencies {
     implementation(libs.androidx.material)
     implementation(libs.androidx.core.ktx)
     implementation(libs.runtime)
+    implementation(project(":ml"))
     runtimeOnly(libs.androidx.material3.v150alpha06)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)
